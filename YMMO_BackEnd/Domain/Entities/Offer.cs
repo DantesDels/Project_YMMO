@@ -9,7 +9,7 @@ public class Offer
     public DateTime DateModified { get; set; }
     public DateTime DatePriceUpdated { get; set; }
     
-    public float OfferPrice { get; set; }
+    public decimal OfferPrice { get; set; }
     public StatusOffer Status { get; set; }
     
     // N:1 Relationships

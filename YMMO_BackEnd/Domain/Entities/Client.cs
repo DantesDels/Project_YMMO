@@ -4,8 +4,7 @@ using YMMO.Backend.Domain.Enum;
 namespace YMMO.Backend.Domain.Entities;
 
 public class Client : Contact
-{ 
-    public ContactRole ContactRole { get; set; }
+{
     public Criteria Criteria { get; set; }
     
     // N:1 Relationship - A client is linked to one main agent

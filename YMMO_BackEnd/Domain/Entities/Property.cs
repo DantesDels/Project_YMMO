@@ -9,15 +9,15 @@ public class Property
     public DateTime DateListed { get; set; }
     public DateTime? DateSold { get; set; } // Nullable since it might not be sold initially
     
-    public float InitialPrice { get; set; }
-    public float CurrentPrice { get; set; }
-    public float? FinalPrice { get; set; }
+    public decimal InitialPrice { get; set; }
+    public decimal CurrentPrice { get; set; }
+    public decimal? FinalPrice { get; set; }
     
     public State State { get; set; }
     public PropertyType PropertyType { get; set; }
     public EnergyClass EnergyClass { get; set; }
-    public string YearBuilt { get; set; }
-    public string Surface { get; set; }
+    public int YearBuilt { get; set; }
+    public decimal Surface { get; set; }
     
     // --- N:1 Relationships ---
     

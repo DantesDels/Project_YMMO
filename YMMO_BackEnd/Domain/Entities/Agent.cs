@@ -5,8 +5,6 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Agent : Contact
 {
-    public ContactRole ContactRole { get; set; }
-    
     // N:1 Relationship - An agent works in a specific agency
     public Guid AgencyID { get; set; }
     public Agency Agency { get; set; }
