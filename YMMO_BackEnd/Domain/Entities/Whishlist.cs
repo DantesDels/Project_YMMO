@@ -6,8 +6,8 @@ public class Wishlist
     
     // N:1 Relationships
     public Guid ClientID { get; set; }
-    public Client Client { get; set; }
+    public Client Client { get; set; } = null!;
     
     public Guid PropertyID { get; set; }
-    public Property Property { get; set; }
+    public Property Property { get; set; } = null!;
 }

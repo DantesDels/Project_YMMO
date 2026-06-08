@@ -6,37 +6,46 @@ namespace YMMO.Backend.Domain.Entities;
 public class Property
 {
     public Guid PropertyID { get; set; }
-    public DateTime DateListed { get; set; }
-    public DateTime? DateSold { get; set; } // Nullable since it might not be sold initially
+    public required DateTime DateListed { get; set; }
     
-    public decimal InitialPrice { get; set; }
-    public decimal CurrentPrice { get; set; }
+    // Nullable since it might not be sold initially
+    public DateTime? DateSold { get; set; } 
+    
+    public required decimal InitialPrice { get; set; }
+    public required decimal CurrentPrice { get; set; }
+    // FinalPrice is null until the sale is closed
     public decimal? FinalPrice { get; set; }
     
-    public State State { get; set; }
-    public PropertyType PropertyType { get; set; }
-    public EnergyClass EnergyClass { get; set; }
-    public int YearBuilt { get; set; }
-    public decimal Surface { get; set; }
+    public required State State { get; set; }
+    public required PropertyType PropertyType { get; set; }
+    public required EnergyClass EnergyClass { get; set; }
+    public required int YearBuilt { get; set; }
+    public required decimal Surface { get; set; }
     
-    // --- N:1 Relationships ---
+    // --- N:1 Relationships --- A property always belongs to an agency and has a location (1,1)
     
+    // The agency having the property responsibility
     public Guid AgencyID { get; set; }
-    public Agency Agency { get; set; }
+    public Agency Agency { get; set; } = null!;
+    
+    // The agent responsible for managing this property listing
+    public Guid? AgentID { get; set; }
+    public Agent? Agent { get; set; }
     
     public Guid LocationID { get; set; }
-    public Location Location { get; set; }
+    public Location Location { get; set; } = null!;
     
-    // The current owner (seller)
+    // A property always has a seller (1,1)
     public Guid SellerID { get; set; }
-    public Client Seller { get; set; }
+    public Client Seller { get; set; } = null!;
     
-    // The buyer (Nullable as long as the property remains unsold)
+    // Buyer is null until the property is sold (0,1)
     public Guid? BuyerID { get; set; }
-    public Client Buyer { get; set; }
+    public Client? Buyer { get; set; }
+    
     
     // --- 1:N Relationships ---
     
-    public ICollection<Offer> Offers { get; set; }
-    public ICollection<Wishlist> Wishlists { get; set; }
+    public ICollection<Offer> Offers { get; set; } = new List<Offer>();
+    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }
