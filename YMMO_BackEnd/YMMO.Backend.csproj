@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+      <UserSecretsId>4b66a9d3-a81a-46cd-81a8-7f1966f1b024</UserSecretsId>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <Folder Include="API\" />
+        <Folder Include="Domain\Repositories\" />
+        <Folder Include="Infrastructure\Repositories\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.1" />
+    </ItemGroup>
+
+</Project>

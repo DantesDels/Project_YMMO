@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="YMMO_BackEnd/YMMO.Backend.csproj" />
+  <Project Path="YMMO_FrontEnd/YMMO.Frontend.csproj" />
+</Solution>
