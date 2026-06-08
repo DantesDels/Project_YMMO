@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using YMMO.Backend.Domain.Enum;
+using YMMO.Backend.Domain.Enums;
 
 namespace YMMO.Backend.Domain.Entities;
 

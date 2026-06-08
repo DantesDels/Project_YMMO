@@ -83,7 +83,18 @@ public class YmmoDbContext : DbContext
             entity.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");
             entity.Property(p => p.FinalPrice).HasColumnType("decimal(18,2)");
             entity.Property(p => p.Surface).HasColumnType("decimal(10,2)");
-
+            
+            // Ask EFCore to save criteria under type string ("Balcony", "Garage")
+            // Instead of type int (0, 3) so it can be Human Readable in the DB
+            entity.Property(p => p.Features)
+                .HasPostgresArrayConversion(
+                    v => v.ToString(),
+                    v => (Criteria)Enum.Parse(typeof(Criteria), v));
+            
+            // Ask EFCore to save PhysicalCondition under type string ("New", "Excellent")
+            entity.Property(p => p.Condition)
+                .HasConversion<string>();
+            
             // Property → Agency (N:1)
             entity.HasOne(p => p.Agency)
                   .WithMany(a => a.Properties)

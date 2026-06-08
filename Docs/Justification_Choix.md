@@ -423,3 +423,52 @@ La cardinalité du MCD dicte directement le pattern C# :
 * **MCD (1,1)** → navigation obligatoire → `= null!`
 * **MCD (0,1)** → navigation optionnelle → `Type?`
 * **MCD (0,N)** → collection → `= new List<T>()`
+
+---
+
+## 10. Séparation des Responsabilités : Entités vs DTOs (Data Transfer Objects)
+
+Une règle fondamentale de l'architecture propre (DDD) est de ne jamais mélanger la réalité physique de la base de données avec les requêtes et interactions des utilisateurs.
+
+### L'Entité (`Property`) = La Réalité Physique
+La classe d'entité représente le bien immobilier tel qu'il existe dans la vraie vie et dans la base de données. Elle décrit ses attributs intrinsèques.
+
+* **Exemple :** `public List<Criteria> Features { get; set; }` décrit simplement la liste des équipements réels de cette maison (ex: un balcon et un garage). L'entité se fiche totalement de savoir si quelqu'un est en train de la rechercher.
+
+### L'Objet de Recherche (`PropertySearchCriteria`) = La Demande du Client
+Cette classe n'est pas une entité et n'existe pas en base de données. C'est un **DTO (Data Transfer Object)** utilisé pour transporter les filtres sélectionnés par l'utilisateur depuis l'interface web (ex: "prix maximum de 300 000 € ET présence d'un garage").
+
+> **L'Analogie de l'Agence :**
+> * **L'Entité `Property`**, c'est la carte d'identité de la maison accrochée dans la vitrine de l'agence.
+> * **Le DTO `PropertySearchCriteria`**, c'est le bout de papier avec lequel le client rentre dans l'agence en disant : "Bonjour, je cherche ça". La maison en vitrine n'a pas besoin de connaître l'existence de ce bout de papier.
+
+### Le Rôle du Repository (Le Pont)
+L'entité et le DTO ne doivent pas être liés directement dans le code du domaine. C'est le **Repository** (`PropertyRepository`) qui fait le lien. Il agit comme l'agent immobilier : il prend les critères du client (`PropertySearchCriteria`), regarde toutes les fiches en vitrine (`Property`), et construit une requête SQL dynamique pour ne renvoyer que les biens qui correspondent à la demande.
+
+---
+
+## 11. Recherche par Numéro de Téléphone : Enjeux Métiers et Contraintes Techniques
+
+L'ajout d'une méthode de recherche par numéro de téléphone dans le portefeuille client (`IClientRepository`) répond à des besoins opérationnels forts tout en introduisant une contrainte de normalisation technique au niveau de la couche Infrastructure.
+
+### A. Les Enjeux Métiers
+
+#### 1. Le Cas d'Usage "CRM" (Pour l'Agent Immobilier)
+Le téléphone reste l'outil de communication principal d'un agent sur le terrain. En cas d'appel manqué ou de note manuscrite, l'agent doit pouvoir retrouver instantanément la fiche complète d'un client (incluant ses offres en cours et sa liste de favoris) sur son tableau de bord back-office en saisissant simplement le numéro de téléphone.
+
+#### 2. La Prévention des Doublons (Intégrité des Données)
+Pour éviter qu'un agent ne recrée manuellement une fiche pour un client qui se serait déjà inscrit de lui-même sur la plateforme web, l'application utilise `GetByPhoneNumberAsync` (en complément de la vérification par email) comme barrière de contrôle stricte avant toute nouvelle persistance en base de données.
+
+#### 3. Évolution vers l'Authentification Forte (Futur)
+Cette méthode pose les fondations architecturales nécessaires pour l'intégration future de mécanismes d'authentification modernes, tels que la connexion par code OTP (One-Time Password) envoyé par SMS ou l'activation de la double authentification (2FA).
+
+### B. La Contrainte Technique : Le "Piège" du Formatage (Infrastructure)
+
+La recherche par numéro de téléphone introduit un défi classique de cohérence des données. Un utilisateur ou un agent peut saisir un numéro sous de multiples formats :
+* `0612345678` (Format local compact)
+* `06 12 34 56 78` (Format local avec espaces)
+* `+33612345678` (Format international standard)
+
+#### Règle d'implémentation :
+Pour garantir l'efficacité de la clause `WHERE` générée par Entity Framework Core lors de l'appel à `GetByPhoneNumberAsync`, le système doit appliquer un **nettoyage et une normalisation stricte au format international (ex: E.164)** avant l'écriture en base de données. Les espaces, points ou tirets doivent être purgés pour stocker une chaîne brute standardisée (ex: `+33612345678`).
+

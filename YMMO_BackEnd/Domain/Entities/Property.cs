@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using YMMO.Backend.Domain.Enum;
+using YMMO.Backend.Domain.Enums;
 
 namespace YMMO.Backend.Domain.Entities;
 
@@ -21,6 +21,8 @@ public class Property
     public required EnergyClass EnergyClass { get; set; }
     public required int YearBuilt { get; set; }
     public required decimal Surface { get; set; }
+    public required PhysicalCondition Condition { get; set; }
+    public List<Criteria> Features { get; set; } = new List<Criteria>();
     
     // --- N:1 Relationships --- A property always belongs to an agency and has a location (1,1)
     
