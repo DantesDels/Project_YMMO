@@ -1,6 +1,10 @@
-﻿namespace YMMO.Backend.Infrastructure.Repositories;
+﻿using Microsoft.EntityFrameworkCore;
+using YMMO.Backend.Domain.Repositories;
+using YMMO.Backend.Infrastructure.Data;
 
-public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity>
+namespace YMMO.Backend.Infrastructure.Repositories;
+
+public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
     protected readonly YmmoDbContext _context;
     protected readonly DbSet<TEntity> _dbSet;
@@ -38,5 +42,4 @@ public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity>
         _dbSet.Remove(entity);
         await _context.SaveChangesAsync();
     }
-}
 }

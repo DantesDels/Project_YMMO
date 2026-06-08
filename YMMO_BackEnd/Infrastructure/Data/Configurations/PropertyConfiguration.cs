@@ -1,8 +1,6 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using YMMO.Backend.Domain.Entities;
-using YMMO.Backend.Domain.Enums; // N'oublie pas d'adapter cet using selon où sont tes Enums
 
 namespace YMMO.Backend.Infrastructure.Data.Configurations;
 
@@ -18,9 +16,7 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
         
         // Ask EFCore to save criteria under type string ("Balcony", "Garage")
         builder.Property(p => p.Features)
-            .HasPostgresArrayConversion(
-                v => v.ToString(),
-                v => (Criteria)Enum.Parse(typeof(Criteria), v));
+            .HasColumnType("text[]");
         
         // Ask EFCore to save PhysicalCondition under type string ("New", "Excellent")
         builder.Property(p => p.Condition)

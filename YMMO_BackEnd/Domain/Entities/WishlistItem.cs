@@ -1,8 +1,8 @@
 ﻿namespace YMMO.Backend.Domain.Entities;
 
-public class Wishlist
+public class WishlistItem
 {
-    public Guid WishlistID { get; set; }
+    public Guid WishlistItemID { get; set; }
     
     // N:1 Relationships
     public Guid ClientID { get; set; }

@@ -6,6 +6,7 @@ namespace YMMO.Backend.Application.DTOs.Property;
 public class PropertyDetailDto
 {
     public Guid PropertyID { get; set; }
+    public int YearBuilt { get; set; }
     public string PropertyType { get; set; } = string.Empty;
     public string Condition { get; set; } = string.Empty;
     public string EnergyClass { get; set; } = string.Empty;

@@ -11,6 +11,9 @@ public class CreatePropertyDto
     public PropertyType PropertyType { get; set; }
     
     [Required]
+    public int YearBuilt { get; set; }
+    
+    [Required]
     public PhysicalCondition Condition { get; set; }
     
     public EnergyClass EnergyClass { get; set; }

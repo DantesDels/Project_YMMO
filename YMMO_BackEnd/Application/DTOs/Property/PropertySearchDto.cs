@@ -1,6 +1,4 @@
-﻿// DTOs/Properties/PropertySearchDto.cs
-
-using YMMO.Backend.Domain.Entities.Enums;
+﻿using YMMO.Backend.Domain.Entities.Enums;
 using YMMO.Backend.Domain.Enums;
 
 namespace YMMO.Backend.Application.DTOs.Property;

@@ -9,8 +9,7 @@ public class OfferRepository : BaseRepository<Offer>, IOfferRepository
 {
     public OfferRepository(YmmoDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Offer>> GetOffersByPropertyAsync(Guid propertyId)
-    {
+    public async Task<IEnumerable<Offer>> GetOffersByPropertyAsync(Guid propertyId) {
         return await _dbSet
             .Include(offer => offer.Client)
             .Where(offer => offer.PropertyID == propertyId)

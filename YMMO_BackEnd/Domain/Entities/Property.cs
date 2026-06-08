@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using YMMO.Backend.Domain.Entities.Enums;
 using YMMO.Backend.Domain.Enums;
 
 namespace YMMO.Backend.Domain.Entities;
@@ -15,8 +16,7 @@ public class Property
     public required decimal CurrentPrice { get; set; }
     // FinalPrice is null until the sale is closed
     public decimal? FinalPrice { get; set; }
-    
-    public required State State { get; set; }
+
     public required PropertyType PropertyType { get; set; }
     public required EnergyClass EnergyClass { get; set; }
     public required int YearBuilt { get; set; }
@@ -49,5 +49,4 @@ public class Property
     // --- 1:N Relationships ---
     
     public ICollection<Offer> Offers { get; set; } = new List<Offer>();
-    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
-}
+    public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();}

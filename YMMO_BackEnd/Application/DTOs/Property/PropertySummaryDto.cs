@@ -1,9 +1,9 @@
 ﻿
-namespace YMMO.Backend.Application.DTOs.Properties;
+namespace YMMO.Backend.Application.DTOs.Property;
 
 public class PropertySummaryDto
 {
-    public Guid PropertyId { get; set; }
+    public Guid PropertyID { get; set; }
     public string PropertyType { get; set; } = string.Empty; // ex: "House", "Appartement"
     public string Condition { get; set; } = string.Empty; // ex: "New", "Ruin"
     public decimal CurrentPrice { get; set; }

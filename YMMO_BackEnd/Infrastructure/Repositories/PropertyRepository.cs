@@ -26,8 +26,14 @@ public class PropertyRepository : BaseRepository<Property>, IPropertyRepository
 
     public async Task<IEnumerable<Property>> GetPropertiesByCriteriaAsync(PropertySearchCriteria criteria)
     {
-        var query = _dbSet.AsQueryable();
-
+        IQueryable<Property> query = _dbSet.AsQueryable();
+        
+        // Property Type Filter
+        if (criteria.Type.HasValue)
+        {
+            query = ((IQueryable<Property>)query).Where(property => property.PropertyType == criteria.Type.Value);
+        }
+        
         // Minimum Price Filter
         if (criteria.MinPrice.HasValue)
         {
@@ -45,18 +51,18 @@ public class PropertyRepository : BaseRepository<Property>, IPropertyRepository
         {
             query = query.Where(property => property.Surface >= criteria.MinSurface.Value);
         }
+        
+        // Maximum Surface Area Filter
+        if (criteria.MaxSurface.HasValue)
+        {
+            query = query.Where(property => property.Surface <= criteria.MaxSurface.Value);
+        }
 
         // City Filter (case-insensitive)
         if (!string.IsNullOrWhiteSpace(criteria.City))
         {
             query = query.Include(property => property.Location)
                          .Where(property => property.Location.City.ToLower() == criteria.City.ToLower());
-        }
-
-        // Property Type Filter
-        if (criteria.Type.HasValue)
-        {
-            query = query.Where(property => property.PropertyType == criteria.Type.Value);
         }
 
         // Features evaluation (Enum Criteria in the PostgreSQL Features array)

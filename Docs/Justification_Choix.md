@@ -472,3 +472,5 @@ La recherche par numéro de téléphone introduit un défi classique de cohéren
 #### Règle d'implémentation :
 Pour garantir l'efficacité de la clause `WHERE` générée par Entity Framework Core lors de l'appel à `GetByPhoneNumberAsync`, le système doit appliquer un **nettoyage et une normalisation stricte au format international (ex: E.164)** avant l'écriture en base de données. Les espaces, points ou tirets doivent être purgés pour stocker une chaîne brute standardisée (ex: `+33612345678`).
 
+---
+
