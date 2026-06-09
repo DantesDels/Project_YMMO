@@ -8,7 +8,7 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
 {
     public void Configure(EntityTypeBuilder<Property> builder)
     {
-        builder.HasKey(p => p.PropertyID);
+        builder.HasKey(p => p.PropertyId);
         builder.Property(p => p.InitialPrice).HasColumnType("decimal(18,2)");
         builder.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");
         builder.Property(p => p.FinalPrice).HasColumnType("decimal(18,2)");
@@ -30,7 +30,7 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
         
         // Property → Agent (N:1)
         builder.HasOne(p => p.Agent)
-               .WithMany(a => a.SoldProperties)
+               .WithMany(a => a.Properties)
                .HasForeignKey(p => p.AgentID)
                .OnDelete(DeleteBehavior.Restrict);
 

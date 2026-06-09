@@ -17,4 +17,14 @@ public class Location
     // 1:N Relationships (Multiple agencies or properties can share the same location)
     public ICollection<Agency> Agencies { get; set; } = new List<Agency>();
     public ICollection<Property> Properties { get; set; } = new List<Property>();
+    
+    public void UpdateLocation(string address, string city, string region, string postalCode, string country, string? complement = null)
+    {
+        Address = !string.IsNullOrWhiteSpace(address) ? address : Address;
+        City = !string.IsNullOrWhiteSpace(city) ? city : City;
+        Region = !string.IsNullOrWhiteSpace(region) ? region : Region;
+        PostalCode = !string.IsNullOrWhiteSpace(postalCode) ? postalCode : PostalCode;
+        Country = !string.IsNullOrWhiteSpace(country) ? country : Country;
+        Complement = complement;
+    }
 }

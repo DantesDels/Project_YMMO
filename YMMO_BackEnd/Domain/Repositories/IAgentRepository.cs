@@ -5,4 +5,6 @@ namespace YMMO.Backend.Domain.Repositories;
 public interface IAgentRepository : IBaseRepository<Agent>
 {
     Task<Agent?> GetAgentWithSoldPropertiesAsync(Guid id);
+    Task<bool> ExistsByEmailAsync(string email);
+    Task<int> GetTotalSoldPropertiesCountAsync(Guid agentId);
 }

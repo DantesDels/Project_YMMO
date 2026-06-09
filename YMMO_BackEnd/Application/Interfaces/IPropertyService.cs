@@ -4,14 +4,14 @@ namespace YMMO.Backend.Application.Interfaces;
 
 public interface IPropertyService
 {
-    // Read
-    Task<IEnumerable<PropertySummaryDto>> GetCatalogAsync();
+    // Read operations: Public access
+    Task<IEnumerable<PropertySummaryDto>> GetAllPropertiesAsync();
     Task<PropertyDetailDto?> GetPropertyByIdAsync(Guid id);
 
-    // Write
+    // Write operations: Authorized access only
     Task<PropertyDetailDto> CreatePropertyAsync(CreatePropertyDto dto);
     Task<PropertyDetailDto> UpdatePropertyAsync(Guid id, UpdatePropertyDto dto);
     
-    // Deletion
+    // Deletion: Authorized access only
     Task<bool> DeletePropertyAsync(Guid id);
 }

@@ -23,15 +23,17 @@ public abstract class Contact
     [MaxLength(20)] // Format E.164 (max 15 numbers + '+')
     public required string PhoneNumber { get; set; }
     
-    public ContactRole ContactRole { get; protected set; }
+    public ContactRole ContactRole { get; set; }
     
     [MaxLength(255)]
-    public required string PasswordHash 
-    { 
-        get => _passwordHash; 
-        init => _passwordHash = value;
+    public string PasswordHash { get; internal set; } = string.Empty;
+    
+    
+    public void SetRole(ContactRole role)
+    {
+        ContactRole = role;
     }
-
+    
     public void UpdatePassword(string newHashedPassword)
     {
         if (string.IsNullOrWhiteSpace(newHashedPassword))

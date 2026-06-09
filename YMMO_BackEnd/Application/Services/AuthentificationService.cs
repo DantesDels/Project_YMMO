@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using AutoMapper;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
@@ -16,13 +17,24 @@ public class AuthentificationService : IAuthentificationService
     private readonly IContactRepository _contactRepository;
     private readonly IClientRepository _clientRepository;
     private readonly IConfiguration _config;
+    private readonly IMapper _mapper;
+    private readonly IUserAccessor _userAccessor;
 
-    public AuthentificationService(IPasswordHasher passwordHasher,IContactRepository contactRepository, IClientRepository clientRepository, IConfiguration config)
+    public AuthentificationService(
+        IPasswordHasher passwordHasher,
+        IContactRepository contactRepository, 
+        IClientRepository clientRepository, 
+        IConfiguration config,
+        IMapper mapper,
+        IUserAccessor userAccessor
+        )
     {
         _passwordHasher = passwordHasher;
         _contactRepository = contactRepository;
         _clientRepository = clientRepository;
         _config = config;
+        _mapper = mapper;
+        _userAccessor = userAccessor;
     }
     
     public async Task<bool> UpdatePasswordAsync(Guid contactId, UpdatePasswordDto dto)
@@ -42,24 +54,29 @@ public class AuthentificationService : IAuthentificationService
         return true;
     }
 
-    private string GenerateJwtToken(string username, Guid userId)
+    private string GenerateJwtToken(Contact user)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        List<Claim> claims = new List<Claim>
         {
-            new Claim("username", username),
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+            new Claim(ClaimTypes.GivenName, user.FirstName),
+            new Claim(ClaimTypes.NameIdentifier, user.ContactId.ToString()),
+            new Claim(ClaimTypes.Role, user.ContactRole.ToString())
         };
+        
+        if (user is Agent agent)
+        {
+            claims.Add(new Claim("AgencyId", agent.AgencyID.ToString()));
+        }
 
         var token = new JwtSecurityToken(
-            _config["Jwt:Issuer"],
-            _config["Jwt:Audience"],
-            claims,
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims, 
             expires: DateTime.UtcNow.AddHours(2),
             signingCredentials: credentials);
-
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
@@ -71,7 +88,7 @@ public class AuthentificationService : IAuthentificationService
             throw new UnauthorizedAccessException("Email ou mot de passe incorrect.");
         }
 
-        var token = GenerateJwtToken(contact.FirstName, contact.ContactId);
+        var token = GenerateJwtToken(contact);
     
         return new AuthentificationDto.AuthentificationResponse(
             token, 
@@ -85,21 +102,28 @@ public class AuthentificationService : IAuthentificationService
         var existing = await _clientRepository.GetByEmailAsync(request.Email);
         if (existing != null) throw new ArgumentException("Cet email est déjà utilisé.");
 
-        string hashedPassword = _passwordHasher.Hash(request.Password);
-    
+        // ANCIENNE VERSION
+        /*
         var newClient = new Client
         {
             CreatedAt = DateTime.UtcNow,
             FirstName = request.Username,
-            LastName = "Utilisateur", 
+            LastName = "Utilisateur",
             Email = request.Email,
-            PhoneNumber = "0000000000",
+            PhoneNumber = request.PhoneNumber,
             PasswordHash = hashedPassword,
         };
-    
+        */
+
+        // NOUVELLE VERSION
+        var newClient = _mapper.Map<Client>(request);
+        newClient.CreatedAt = DateTime.UtcNow;
+        newClient.LastName = "Utilisateur";
+        newClient.PasswordHash = _passwordHasher.Hash(request.Password);
+        
         await _clientRepository.AddAsync(newClient);
 
-        var token = GenerateJwtToken(newClient.FirstName, newClient.ContactId);
+        var token = GenerateJwtToken(newClient);
     
         return new AuthentificationDto.AuthentificationResponse(
             token, 

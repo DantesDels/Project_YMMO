@@ -48,7 +48,7 @@ public class SearchService : ISearchService
             .Take(criteria.PageSize)
             .Select(p => new PropertySummaryDto 
             {
-                PropertyID = p.PropertyID,
+                PropertyID = p.PropertyId,
                 City = p.Location.City,
                 CurrentPrice = p.CurrentPrice
             })
@@ -58,7 +58,7 @@ public class SearchService : ISearchService
     public async Task<IEnumerable<PropertySummaryDto>> GetSimilarPropertiesAsync(Guid propertyId, int count = 5)
     {
         var sourceProperty = await _context.Properties
-            .FirstOrDefaultAsync(p => p.PropertyID == propertyId);
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId);
 
         if (sourceProperty == null)
             return Enumerable.Empty<PropertySummaryDto>();
@@ -66,7 +66,7 @@ public class SearchService : ISearchService
         // Query similar properties
         // Logic: Same type, same city, price within +/- 20% range
         return await _context.Properties
-            .Where(p => p.PropertyID != propertyId && 
+            .Where(p => p.PropertyId != propertyId && 
                         p.PropertyType == sourceProperty.PropertyType && 
                         p.Location.City == sourceProperty.Location.City &&
                         p.CurrentPrice >= sourceProperty.CurrentPrice * 0.8m && 
@@ -75,7 +75,7 @@ public class SearchService : ISearchService
             .Take(count)
             .Select(p => new PropertySummaryDto
             {
-                PropertyID = p.PropertyID,
+                PropertyID = p.PropertyId,
                 City = p.Location.City,
                 CurrentPrice = p.CurrentPrice
             })

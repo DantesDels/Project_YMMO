@@ -13,5 +13,14 @@ public class AgentConfiguration : IEntityTypeConfiguration<Agent>
             .WithMany(a => a.Agents)
             .HasForeignKey(ag => ag.AgencyID)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        builder.Metadata.FindNavigation(nameof(Agent.Properties))
+            ?.SetPropertyAccessMode(PropertyAccessMode.Field);
+        
+        // Property (1:N)
+        builder.HasMany(a => a.Properties)
+            .WithOne(p => p.Agent)
+            .HasForeignKey(p => p.AgentID)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

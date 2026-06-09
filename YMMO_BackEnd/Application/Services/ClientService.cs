@@ -1,4 +1,5 @@
-﻿using YMMO.Backend.Application.DTOs.Client;
+﻿using AutoMapper;
+using YMMO.Backend.Application.DTOs.Client;
 using YMMO.Backend.Application.DTOs.Wishlist;
 using YMMO.Backend.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
@@ -13,50 +14,41 @@ public class ClientService : IClientService
     private readonly IClientRepository _clientRepository;
     private readonly IWishlistItemRepository _wishlistItemRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IUserAccessor _userAccessor;
+    private readonly IMapper _mapper;
     
-    public ClientService(IClientRepository clientRepository, IWishlistItemRepository wishlistItemRepository, IPasswordHasher passwordHasher) 
-	{
-	_clientRepository = clientRepository;
-	_wishlistItemRepository = wishlistItemRepository;
-    _passwordHasher = passwordHasher;
-	}
+    public ClientService(
+        IClientRepository clientRepository, 
+        IWishlistItemRepository wishlistItemRepository, 
+        IPasswordHasher passwordHasher,
+        IUserAccessor userAccessor,
+        IMapper mapper) 
+    {
+        _clientRepository = clientRepository;
+        _wishlistItemRepository = wishlistItemRepository;
+        _passwordHasher = passwordHasher;
+        _userAccessor = userAccessor;
+        _mapper = mapper;
+    }
 
     public async Task<ClientProfileDto?> GetProfileAsync(Guid clientId)
     {
         var client = await _clientRepository.GetByIdAsync(clientId);
-        if (client == null) return null;
-
-        return new ClientProfileDto
-        {
-            ContactId = client.ContactId,
-            FirstName = client.FirstName,
-            LastName = client.LastName,
-            Email = client.Email,
-            PhoneNumber = client.PhoneNumber,
-            
-            // Counting items for Dashboard Vue.js
-            ActiveOffersCount = client.Offers?.Count ?? 0,
-            WishlistItemsCount = client.WishlistItems?.Count ?? 0
-        };
+        return client == null ? null : _mapper.Map<ClientProfileDto>(client);
     }
 
     public async Task<ClientProfileDto> RegisterClientAsync(RegisterClientDto dto)
     {
-        var existingClient = await _clientRepository.GetByEmailAsync(dto.Email);
-        if(existingClient != null) throw new Exception("Cet email existe déjà.");
+        if (await _clientRepository.GetByEmailAsync(dto.Email) != null) 
+            throw new Exception("Cet email existe déjà.");
 
-        var newClient = new Client
-        {
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            Email = dto.Email,
-            PhoneNumber = dto.PhoneNumber,
-            CreatedAt = DateTime.UtcNow,
-            PasswordHash = _passwordHasher.Hash(dto.Password)
-        };
+        var newClient = _mapper.Map<Client>(dto);
+        newClient.CreatedAt = DateTime.UtcNow;
+        newClient.PasswordHash = _passwordHasher.Hash(dto.Password);
 
         await _clientRepository.AddAsync(newClient);
-        return new ClientProfileDto();
+        
+        return _mapper.Map<ClientProfileDto>(newClient);
     }
 
     public async Task<ClientProfileDto> UpdateProfileAsync(Guid clientId, UpdateClientDto dto)
@@ -64,34 +56,26 @@ public class ClientService : IClientService
         var client = await _clientRepository.GetByIdAsync(clientId);
         if (client == null) throw new KeyNotFoundException("Client introuvable.");
 
-        client.FirstName = dto.FirstName;
-        client.LastName = dto.LastName;
-        client.Email = dto.Email;
-        client.PhoneNumber = dto.PhoneNumber;
-        
-        // If Agent is being assigned to Client
-        if (dto.AgentID.HasValue)
-        {
-            client.AgentID = dto.AgentID.Value;
-        }
+        _mapper.Map(dto, client);
 
         await _clientRepository.UpdateAsync(client);
-        
-        return  new ClientProfileDto();
+        return _mapper.Map<ClientProfileDto>(client);
     }
 
     // --- SECTION WISHLIST ---
 
     public async Task AddToWishlistAsync(AddWishlistDto dto)
     {
-        if (!dto.ClientID.HasValue || !dto.PropertyID.HasValue)
+        var clientId = _userAccessor.GetCurrentUserId();
+        
+        if (!dto.PropertyID.HasValue)
         {
-            throw new ArgumentException("ClientID et PropertyID sont obligatoires.");
+            throw new ArgumentException("PropertyID est obligatoire.");
         }
         
         var wishlistItem = new WishlistItem
         {
-            ClientID = dto.ClientID.Value,
+            ClientID = clientId, // Secure the Token
             PropertyID = dto.PropertyID.Value,
         };
         
@@ -100,13 +84,17 @@ public class ClientService : IClientService
 
     public async Task RemoveFromWishlistAsync(RemoveWishlistDto dto)
     {
-        if (!dto.ClientID.HasValue || !dto.PropertyID.HasValue)
+        var clientId = _userAccessor.GetCurrentUserId();
+        
+        if (!dto.PropertyID.HasValue)
         {
-            throw new ArgumentException("ClientID et PropertyID sont obligatoires.");
+            throw new ArgumentException("PropertyID est obligatoire.");
         }
         
-        // Use composite key (ClientID, PropertyID) to identify the unique favorite relationship.
-        var wishlistItem = await _wishlistItemRepository.GetByIdsAsync(dto.ClientID.Value, dto.PropertyID.Value);
+        // Retrieve the client identity from the authenticated session (JWT) instead of relying on the DTO. 
+        // This ensures that a client can only modify their own wishlist, preventing ID spoofing 
+        // and unauthorized access to other users' data.
+        var wishlistItem = await _wishlistItemRepository.GetByIdsAsync(clientId, dto.PropertyID.Value);
         
         if (wishlistItem != null)
         {

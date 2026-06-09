@@ -16,4 +16,11 @@ public class Agency
     // 1:N Relationships
     public ICollection<Agent> Agents { get; set; } = new List<Agent>();
     public ICollection<Property> Properties { get; set; } = new List<Property>();
+    
+    public void UpdateDetails(string name, string email, string phoneNumber)
+    {
+        Name = !string.IsNullOrWhiteSpace(name) ? name : Name;
+        Email = !string.IsNullOrWhiteSpace(email) ? email : Email;
+        PhoneNumber = !string.IsNullOrWhiteSpace(phoneNumber) ? phoneNumber : PhoneNumber;
+    }
 }

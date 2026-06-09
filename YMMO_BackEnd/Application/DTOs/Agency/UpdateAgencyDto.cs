@@ -5,18 +5,15 @@ namespace YMMO.Backend.Application.DTOs.Agency;
 
 public class UpdateAgencyDto
 {
-    [Required]
-    [MaxLength(150)]
+    [Required(ErrorMessage = "Le nom de l'agence est obligatoire.")]
+    [StringLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères.")]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
-    [EmailAddress]
-    [MaxLength(200)]
+    
     public string Email { get; set; } = string.Empty;
 
-    [MaxLength(20)]
+    [Phone(ErrorMessage = "Format de numéro de téléphone invalide.")]
     public string PhoneNumber { get; set; } = string.Empty;
 
     [Required] 
-    public CreateLocationDto NewAddress { get; set; } = null!;
+    public LocationDto NewAddress { get; set; } = null!;
 }

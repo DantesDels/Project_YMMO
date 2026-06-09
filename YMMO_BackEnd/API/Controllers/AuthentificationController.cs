@@ -12,14 +12,10 @@ namespace YMMO.BackEnd.API.Controllers;
 public class AuthentificationController : ControllerBase
 {
     private readonly IAuthentificationService _authentificationService;
-    private readonly IWebHostEnvironment _env;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly IContactRepository _contactRepository;
 
-    public AuthentificationController(IAuthentificationService authentificationService, IWebHostEnvironment env, IPasswordHasher passwordHasher)
+    public AuthentificationController(IAuthentificationService authentificationService)
     {
         _authentificationService = authentificationService;
-        _env = env;
     }
 
     [HttpPost("register")]

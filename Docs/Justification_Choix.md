@@ -677,3 +677,409 @@ UpdatePassword →  Méthode publique →  Le directeur avec la clé
 **L'underscore n'est pas qu'une convention stylistique — c'est un signal
 architectural qui indique qu'une donnée est protégée et que sa
 modification passe obligatoirement par une logique métier validée.**
+
+---
+
+# Outils et Packages Complémentaires — Projet Ymmo
+
+## Contexte
+
+Sans ces outils, la complexité d'un projet comme Ymmo explose à mesure
+qu'il grandit. Les contrôleurs et services deviennent des "brouillons"
+où la logique métier est noyée dans du code répétitif (boilerplate).
+Ces quatre packages répondent chacun à un problème architectural précis.
+
+---
+
+## 1. AutoMapper — Le traducteur automatique
+
+### Le problème sans AutoMapper
+
+Sans AutoMapper, chaque conversion entre une entité et son DTO
+s'écrit manuellement :
+
+```csharp
+// ❌ Mapping manuel — répétitif et source d'erreurs
+var dto = new PropertyDto
+{
+    PropertyID  = property.PropertyID,
+    CurrentPrice = property.CurrentPrice,
+    Surface      = property.Surface,
+    City         = property.Location.City,
+    // ... 15 autres propriétés à ne pas oublier
+};
+```
+
+Dans un projet immobilier avec 20 entités, cela représente des centaines
+de lignes de code identiques, réparties dans tous tes services.
+
+### La solution
+
+AutoMapper automatise ces conversions via des profils de configuration
+centralisés :
+
+```csharp
+// Configuration centralisée — un seul endroit
+public class YmmoMappingProfile : Profile
+{
+    public YmmoMappingProfile()
+    {
+        CreateMap<Property, PropertyDto>()
+            .ForMember(dest => dest.City,
+                       opt => opt.MapFrom(src => src.Location.City));
+
+        CreateMap<Agency, AgencyDto>();
+        CreateMap<Client, ClientDto>();
+    }
+}
+
+// Utilisation dans un service — propre et lisible
+public async Task<PropertyDto> GetByIdAsync(Guid id)
+{
+    var property = await _repository.GetByIdAsync(id);
+    return _mapper.Map<PropertyDto>(property); // ← une seule ligne
+}
+```
+
+### Pourquoi c'est important pour Ymmo
+
+| Situation | Sans AutoMapper | Avec AutoMapper |
+|---|---|---|
+| Ajout de `Surface` à `Property` | Mettre à jour 10 méthodes | Mettre à jour 1 profil |
+| Oubli d'une propriété | Silencieux, bug en prod | Détecté à la configuration |
+| Lisibilité du service | Noyée dans le mapping | Centrée sur la logique métier |
+
+---
+
+## 2. FluentValidation — Le gardien de la porte
+
+### Le problème sans FluentValidation
+
+Les Data Annotations (`[Required]`, `[MaxLength]`) sont limitées et
+polluent tes DTOs avec de la logique qui n'a rien à y faire :
+
+```csharp
+// ❌ DTO surchargé de règles de validation
+public class CreateOfferDto
+{
+    [Required]
+    [Range(0, double.MaxValue, ErrorMessage = "Price must be positive")]
+    public decimal OfferPrice { get; set; }
+
+    [Required]
+    public DateTime DateCreated { get; set; }
+
+    // Comment valider que DateFin > DateDebut avec des attributs ?
+    // Impossible proprement.
+}
+```
+
+### La solution
+
+FluentValidation isole les règles métier dans des classes dédiées,
+testables indépendamment :
+
+```csharp
+// Validator isolé — responsabilité unique
+public class CreateOfferDtoValidator : AbstractValidator<CreateOfferDto>
+{
+    public CreateOfferDtoValidator()
+    {
+        RuleFor(x => x.OfferPrice)
+            .GreaterThan(0)
+            .WithMessage("Offer price must be greater than zero.");
+
+        RuleFor(x => x.DateCreated)
+            .NotEmpty()
+            .LessThanOrEqualTo(DateTime.UtcNow)
+            .WithMessage("Offer date cannot be in the future.");
+
+        // Règle complexe impossible avec les attributs
+        RuleFor(x => x.ExpiryDate)
+            .GreaterThan(x => x.DateCreated)
+            .WithMessage("Expiry date must be after creation date.");
+    }
+}
+```
+
+### Pourquoi c'est important pour Ymmo
+
+| Situation | Data Annotations | FluentValidation |
+|---|---|---|
+| Règle simple (`Required`) | ✅ | ✅ |
+| Règle complexe (`DateFin > DateDebut`) | ❌ | ✅ |
+| Tester la validation sans l'API | ❌ | ✅ |
+| DTO sans logique parasite | ❌ | ✅ |
+| Message d'erreur personnalisé | Limité | ✅ |
+
+---
+
+## 3. IHttpContextAccessor — Le portier de l'identité
+
+### Le problème sans IHttpContextAccessor
+
+Sans cet outil, l'identité de l'utilisateur est transmise manuellement
+en paramètre à travers toutes les couches :
+
+```csharp
+// ❌ L'ID utilisateur "pollue" toutes les signatures de méthodes
+public async Task<IEnumerable<OfferDto>> GetMyOffersAsync(Guid clientId)
+public async Task UpdateProfileAsync(Guid clientId, UpdateProfileDto dto)
+public async Task AddToWishlistAsync(Guid clientId, Guid propertyId)
+```
+
+Le problème de sécurité : tu fais confiance à l'ID fourni par le client.
+Rien n'empêche un utilisateur malveillant de passer l'ID d'un autre
+client et d'accéder à ses données.
+
+### La solution
+
+`IHttpContextAccessor` permet à tes services d'extraire eux-mêmes
+l'identité depuis le token JWT, sans que personne n'ait besoin de
+la leur transmettre :
+
+```csharp
+// Service qui s'identifie lui-même via le token JWT
+public class CurrentUserService
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    // Extrait l'ID directement depuis le token — pas de paramètre externe
+    public Guid GetCurrentUserId()
+    {
+        var claim = _httpContextAccessor.HttpContext?.User
+                        .FindFirst(ClaimTypes.NameIdentifier);
+
+        if (claim == null)
+            throw new UnauthorizedAccessException("User is not authenticated.");
+
+        return Guid.Parse(claim.Value);
+    }
+}
+
+// Les méthodes de service deviennent propres
+public async Task<IEnumerable<OfferDto>> GetMyOffersAsync()
+{
+    var clientId = _currentUserService.GetCurrentUserId(); // ← extrait du token
+    return await _repository.GetByClientIdAsync(clientId);
+}
+```
+
+### Pourquoi c'est important pour Ymmo
+
+| Situation | Sans IHttpContextAccessor | Avec IHttpContextAccessor |
+|---|---|---|
+| Source de l'identité | Paramètre fourni par le client | Token JWT signé par le serveur |
+| Risque d'usurpation | ✅ Possible | ❌ Impossible |
+| Pollution des signatures | ✅ `userId` partout | ❌ Extrait automatiquement |
+| Cohérence | Manuelle | Garantie |
+
+---
+
+## 4. MailKit — Le service d'envoi d'emails
+
+### Installation
+```powershell
+dotnet add package MailKit
+```
+
+### Cas d'usage pour Ymmo
+
+MailKit est la bibliothèque d'envoi d'email la plus robuste de
+l'écosystème .NET. Dans le contexte du projet Ymmo, elle sert à :
+
+- Notifier un client qu'une offre a été acceptée ou refusée
+- Envoyer un email de confirmation d'inscription
+- Alerter un agent qu'un nouveau bien correspond à une wishlist client
+- Envoyer un récapitulatif de transaction après une vente
+
+### Exemple d'implémentation
+
+```csharp
+public class EmailService : IEmailService
+{
+    private readonly IConfiguration _config;
+
+    public EmailService(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    public async Task SendOfferStatusEmailAsync(string toEmail,
+                                                string clientName,
+                                                string propertyAddress,
+                                                string status)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ymmo", "noreply@ymmo.fr"));
+        message.To.Add(new MailboxAddress(clientName, toEmail));
+        message.Subject = $"Votre offre pour {propertyAddress} — {status}";
+
+        message.Body = new TextPart("plain")
+        {
+            Text = $"Bonjour {clientName},\n\n" +
+                   $"Votre offre pour le bien situé à {propertyAddress} " +
+                   $"a été {status.ToLower()}.\n\n" +
+                   $"L'équipe Ymmo"
+        };
+
+        using var client = new SmtpClient();
+        await client.ConnectAsync(
+            _config["Email:SmtpHost"],
+            int.Parse(_config["Email:SmtpPort"]),
+            SecureSocketOptions.StartTls
+        );
+        await client.AuthenticateAsync(
+            _config["Email:Username"],
+            _config["Email:Password"]
+        );
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
+    }
+}
+```
+
+> ⚠️ Les credentials SMTP (`Username`, `Password`) ne vont jamais dans
+> `appsettings.json`. Utilise les **User Secrets** en dev et les
+> **variables d'environnement** en prod — voir le guide
+> *Gestion des Secrets en .NET*.
+
+---
+
+## Tableau récapitulatif
+
+| Package | Problème résolu | Bénéfice principal |
+|---|---|---|
+| **AutoMapper** | Mappings manuels répétitifs | Conversion automatique et centralisée |
+| **FluentValidation** | DTOs surchargés, règles basiques | Règles métier complexes et isolées |
+| **IHttpContextAccessor** | Passage d'ID redondant et risqué | Identification automatique via JWT |
+| **MailKit** | Notifications transactionnelles | Envoi d'emails robuste et async |
+
+---
+
+## Impact architectural sur Ymmo
+
+```
+Sans ces outils :
+Controller → Service (userId, mapping manuel, validation inline, email inline)
+     ↓
+Code impossible à maintenir après 3 semaines
+
+Avec ces outils :
+Controller → Service → AutoMapper (mapping)
+                    → FluentValidation (validation)
+                    → IHttpContextAccessor (identité)
+                    → MailKit (notifications)
+     ↓
+Chaque responsabilité dans sa couche, testable indépendamment
+```
+
+---
+
+# FluentValidation — Décision d'Architecture
+
+## Contexte
+
+FluentValidation était prévu comme solution de validation des DTOs dans
+le projet Ymmo. Lors de l'intégration, nous avons rencontré un problème
+de dépréciation qui a conduit à un choix architectural différent.
+
+---
+
+## Le problème rencontré
+
+Le package `FluentValidation.AspNetCore` — qui permet l'intégration
+automatique avec le pipeline ASP.NET Core — est officiellement marqué
+comme **déprécié** par ses mainteneurs :
+
+```
+FluentValidation.AspNetCore is Deprecated:
+This package has been deprecated as it is legacy and no longer maintained.
+```
+
+Les mainteneurs ont scindé la bibliothèque en deux packages distincts :
+
+- `FluentValidation` — le cœur de la bibliothèque
+- `FluentValidation.DependencyInjectionExtensions` — l'intégration DI
+
+Cependant, la méthode `AddFluentValidationAutoValidation()` — qui
+permettait la validation automatique sur les contrôleurs — a été
+entièrement supprimée dans les versions récentes, rendant l'intégration
+transparente avec ASP.NET Core impossible sans contournements.
+
+---
+
+## La décision
+
+Plutôt que d'introduire un contournement fragile ou de dépendre d'un
+package non maintenu, nous avons choisi de **ne pas utiliser
+FluentValidation** dans le projet Ymmo.
+
+Ce choix respecte le principe **KISS** (Keep It Simple, Stupid) :
+ne pas ajouter de complexité pour résoudre un problème qu'on peut
+adresser autrement.
+
+---
+
+## L'alternative retenue : validation manuelle dans les services
+
+La validation est effectuée directement dans la couche Application,
+au niveau des services, avant toute interaction avec le repository.
+
+```csharp
+public async Task<OfferDto> CreateOfferAsync(CreateOfferDto dto)
+{
+    // Validation manuelle — explicite et lisible
+    if (dto.OfferPrice <= 0)
+        throw new ArgumentException("Offer price must be greater than zero.");
+
+    if (dto.ExpiryDate <= dto.DateCreated)
+        throw new ArgumentException("Expiry date must be after creation date.");
+
+    // Logique métier après validation
+    var offer = _mapper.Map<Offer>(dto);
+    await _repository.AddAsync(offer);
+    return _mapper.Map<OfferDto>(offer);
+}
+```
+
+---
+
+## Comparatif des approches
+
+| Critère | FluentValidation | Validation manuelle |
+|---|---|---|
+| Séparation des responsabilités | ✅ Classe dédiée | ⚠️ Dans le service |
+| Lisibilité des règles | ✅ Fluent API | ✅ Explicite |
+| Dépendance externe | ❌ Package déprécié | ✅ Aucune |
+| Testabilité | ✅ Isolée | ✅ Via le service |
+| Complexité d'intégration | ❌ Élevée | ✅ Nulle |
+| Règles complexes | ✅ Chainables | ✅ Possibles en C# |
+
+---
+
+## Ce qu'on retient pour l'oral
+
+Ce choix est **justifiable et défendable** car :
+
+1. **Pragmatisme** — Introduire un outil déprécié dans un projet
+   d'évaluation serait une dette technique dès le départ.
+
+2. **Transparence** — La validation manuelle dans le service est
+   immédiatement lisible par n'importe quel développeur sans
+   connaissance préalable de FluentValidation.
+
+3. **Maintenabilité** — Zéro dépendance externe supplémentaire
+   à maintenir, mettre à jour ou migrer.
+
+> En architecture logicielle, savoir **quand ne pas ajouter un outil**
+> est aussi important que savoir lequel choisir. La complexité
+> accidentelle (celle qu'on s'inflige soi-même) est l'ennemi
+> de la maintenabilité.
+
+---

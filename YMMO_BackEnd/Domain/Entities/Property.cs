@@ -6,7 +6,7 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Property
 {
-    public Guid PropertyID { get; set; }
+    public Guid PropertyId { get; set; }
     public required DateTime DateListed { get; set; }
     
     // Nullable since it might not be sold initially

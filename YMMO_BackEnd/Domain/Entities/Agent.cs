@@ -10,12 +10,31 @@ public class Agent : Contact
         ContactRole = ContactRole.Agent;
     }
     
+    private readonly List<Property> _properties = new();
+    
     // N:1 Relationship - An agent works in a specific agency
     public Guid AgencyID { get; set; }
     public Agency Agency { get; set; } = null!;
     
     // 1:N Relationships
     public ICollection<Client> LinkedClients { get; set; } = new List<Client>();
-    public ICollection<Property> SoldProperties { get; set; } = new List<Property>();
     public ICollection<Offer> ManagedOffers { get; set; } = new List<Offer>();
+    public IReadOnlyCollection<Property> Properties => _properties.AsReadOnly();
+
+    
+    public void AddProperty(Property property)
+    {
+        if (property == null) throw new ArgumentNullException(nameof(property));
+        _properties.Add(property);
+    }
+    
+    public void RemoveProperty(Property property)
+    {
+        if (property == null) throw new ArgumentNullException(nameof(property));
+        
+        if (!_properties.Contains(property))
+            throw new InvalidOperationException("Cette propriété ne fait pas partie du catalogue de cet agent.");
+
+        _properties.Remove(property);
+    }
 }
