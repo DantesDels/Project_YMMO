@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YMMO.Backend.Domain.Entities;
+using YMMO.Backend.Application.Interfaces;
+using YMMO.BackEnd.Application.Interfaces;
 
 namespace YMMO.Backend.Infrastructure.Data;
 
-public class YmmoDbContext : DbContext
+public class YmmoDbContext : DbContext, IYmmoDbContext
 {
     public YmmoDbContext(DbContextOptions<YmmoDbContext> options) : base(options) {}
 

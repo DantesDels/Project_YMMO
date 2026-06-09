@@ -16,7 +16,7 @@ public class OfferConfiguration : IEntityTypeConfiguration<Offer>
             .HasColumnType("decimal(18,2)");
 
         // Enum conversion for status
-        builder.Property(o => o.Status)
+        builder.Property(o => o.StatusOffer)
             .HasConversion<string>();
 
         // Offer -> Property (N:1)

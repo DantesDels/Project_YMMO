@@ -74,7 +74,7 @@ public class PropertyService : IPropertyService
         };
     }
 
-    public async Task<Guid> CreatePropertyAsync(CreatePropertyDto dto)
+    public async Task<PropertyDetailDto> CreatePropertyAsync(CreatePropertyDto dto)
     {
         var property = new Property
         {
@@ -104,10 +104,10 @@ public class PropertyService : IPropertyService
 
         await _propertyRepository.AddAsync(property);
 
-        return property.PropertyID;
+        return new PropertyDetailDto();
     }
 
-    public async Task UpdatePropertyAsync(Guid id, UpdatePropertyDto dto)
+    public async Task<PropertyDetailDto> UpdatePropertyAsync(Guid id, UpdatePropertyDto dto)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
         
@@ -122,9 +122,11 @@ public class PropertyService : IPropertyService
         property.Features = dto.Features;
 
         await _propertyRepository.UpdateAsync(property);
+        
+        return new PropertyDetailDto();
     }
 
-    public async Task DeletePropertyAsync(Guid id)
+    public async Task<bool> DeletePropertyAsync(Guid id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
         
@@ -132,5 +134,6 @@ public class PropertyService : IPropertyService
         {
             await _propertyRepository.DeleteAsync(property);
         }   
+        return true;
     }
 }

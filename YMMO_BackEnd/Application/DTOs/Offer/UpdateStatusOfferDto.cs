@@ -4,7 +4,7 @@ using YMMO.Backend.Domain.Enums;
 
 namespace YMMO.Backend.Application.DTOs.Offers;
 
-public class UpdateOfferStatusDto
+public class UpdateStatusOfferDto
 {
     [Required(ErrorMessage = "Le nouveau statut est obligatoire.")]
     public StatusOffer? NewStatus { get; set; }

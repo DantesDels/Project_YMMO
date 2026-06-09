@@ -4,7 +4,7 @@ using YMMO.Backend.Domain.Entities;
 
 namespace YMMO.Backend.Infrastructure.Data.Configurations;
 
-public class WishlistConfiguration : IEntityTypeConfiguration<WishlistItem>
+public class WishlistItemConfiguration : IEntityTypeConfiguration<WishlistItem>
 {
     public void Configure(EntityTypeBuilder<WishlistItem> builder)
     {

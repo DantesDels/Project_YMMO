@@ -4,6 +4,7 @@ using YMMO.Backend.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
 using YMMO.Backend.Domain.Repositories;
 
+
 namespace YMMO.Backend.Application.Services;
 
 public class ClientService : IClientService
@@ -11,11 +12,11 @@ public class ClientService : IClientService
     private readonly IClientRepository _clientRepository;
     private readonly IWishlistItemRepository _wishlistItemRepository;
     
-    public ClientService(IClientRepository clientRepository, IWishlistItemRepository wishlistItemRepository)
-    {
-        _clientRepository = clientRepository;
-        _wishlistItemRepository = wishlistItemRepository;
-    }
+    public ClientService(IClientRepository clientRepository, IWishlistItemRepository wishlistItemRepository) 
+	{
+	_clientRepository = clientRepository;
+	_wishlistItemRepository = wishlistItemRepository;
+	}
 
     public async Task<ClientProfileDto?> GetProfileAsync(Guid clientId)
     {
@@ -36,7 +37,7 @@ public class ClientService : IClientService
         };
     }
 
-    public async Task<Guid> RegisterClientAsync(RegisterClientDto dto)
+    public async Task<ClientProfileDto> RegisterClientAsync(RegisterClientDto dto)
     {
         var existingClient = await _clientRepository.GetByEmailAsync(dto.Email);
         if(existingClient != null) throw new Exception("Cet email existe déjà.");
@@ -52,10 +53,10 @@ public class ClientService : IClientService
         };
 
         await _clientRepository.AddAsync(newClient);
-        return newClient.ContactID;
+        return new ClientProfileDto();
     }
 
-    public async Task UpdateProfileAsync(Guid clientId, UpdateClientDto dto)
+    public async Task<ClientProfileDto> UpdateProfileAsync(Guid clientId, UpdateClientDto dto)
     {
         var client = await _clientRepository.GetByIdAsync(clientId);
         if (client == null) throw new KeyNotFoundException("Client introuvable.");
@@ -72,6 +73,8 @@ public class ClientService : IClientService
         }
 
         await _clientRepository.UpdateAsync(client);
+        
+        return  new ClientProfileDto();
     }
 
     // --- SECTION WISHLIST ---

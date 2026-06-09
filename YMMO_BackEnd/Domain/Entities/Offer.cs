@@ -12,7 +12,7 @@ public class Offer
     public DateTime? DatePriceUpdated { get; set; }
     
     public required decimal OfferPrice { get; set; }
-    public required StatusOffer Status { get; set; }
+    public required StatusOffer StatusOffer { get; set; }
     
     // N:1 Relationships - An offer always has a client, an agent and a property (1,1)
     public Guid ClientID { get; set; }

@@ -9,7 +9,9 @@ public interface IPropertyService
     Task<PropertyDetailDto?> GetPropertyByIdAsync(Guid id);
 
     // Write
-    Task<Guid> CreatePropertyAsync(CreatePropertyDto dto);
-    Task UpdatePropertyAsync(Guid id, UpdatePropertyDto dto);
-    Task DeletePropertyAsync(Guid id);
+    Task<PropertyDetailDto> CreatePropertyAsync(CreatePropertyDto dto);
+    Task<PropertyDetailDto> UpdatePropertyAsync(Guid id, UpdatePropertyDto dto);
+    
+    // Deletion
+    Task<bool> DeletePropertyAsync(Guid id);
 }
