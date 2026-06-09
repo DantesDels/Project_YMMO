@@ -5,7 +5,7 @@ namespace YMMO.Backend.Domain.Entities;
 // 'abstract' because we only instantiate Client or Agent
 public abstract class Contact
 {
-    public Guid ContactID { get; set; }
+    public Guid ContactID { get; set; } =  Guid.NewGuid();
     public required string LastName { get; set; }
     public required string FirstName { get; set; }
     public required string Email { get; set; }

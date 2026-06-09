@@ -81,6 +81,11 @@ public class ClientService : IClientService
 
     public async Task AddToWishlistAsync(AddWishlistDto dto)
     {
+        if (!dto.ClientID.HasValue || !dto.PropertyID.HasValue)
+        {
+            throw new ArgumentException("ClientID et PropertyID sont obligatoires.");
+        }
+        
         var wishlistItem = new WishlistItem
         {
             ClientID = dto.ClientID.Value,
@@ -92,6 +97,11 @@ public class ClientService : IClientService
 
     public async Task RemoveFromWishlistAsync(RemoveWishlistDto dto)
     {
+        if (!dto.ClientID.HasValue || !dto.PropertyID.HasValue)
+        {
+            throw new ArgumentException("ClientID et PropertyID sont obligatoires.");
+        }
+        
         // Use composite key (ClientID, PropertyID) to identify the unique favorite relationship.
         var wishlistItem = await _wishlistItemRepository.GetByIdsAsync(dto.ClientID.Value, dto.PropertyID.Value);
         
