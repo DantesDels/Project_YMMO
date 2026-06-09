@@ -2,6 +2,7 @@
 using YMMO.Backend.Application.DTOs.Wishlist;
 using YMMO.Backend.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
+using YMMO.Backend.Domain.Interfaces;
 using YMMO.Backend.Domain.Repositories;
 
 
@@ -11,11 +12,13 @@ public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
     private readonly IWishlistItemRepository _wishlistItemRepository;
+    private readonly IPasswordHasher _passwordHasher;
     
-    public ClientService(IClientRepository clientRepository, IWishlistItemRepository wishlistItemRepository) 
+    public ClientService(IClientRepository clientRepository, IWishlistItemRepository wishlistItemRepository, IPasswordHasher passwordHasher) 
 	{
 	_clientRepository = clientRepository;
 	_wishlistItemRepository = wishlistItemRepository;
+    _passwordHasher = passwordHasher;
 	}
 
     public async Task<ClientProfileDto?> GetProfileAsync(Guid clientId)
@@ -25,7 +28,7 @@ public class ClientService : IClientService
 
         return new ClientProfileDto
         {
-            ContactId = client.ContactID,
+            ContactId = client.ContactId,
             FirstName = client.FirstName,
             LastName = client.LastName,
             Email = client.Email,
@@ -49,7 +52,7 @@ public class ClientService : IClientService
             Email = dto.Email,
             PhoneNumber = dto.PhoneNumber,
             CreatedAt = DateTime.UtcNow,
-            // Le mot de passe (dto.Password) devra être haché ici plus tard avec BCrypt !
+            PasswordHash = _passwordHasher.Hash(dto.Password)
         };
 
         await _clientRepository.AddAsync(newClient);

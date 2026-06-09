@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
-namespace YMMO.BackEnd.API.Middleware;
+namespace YMMO.Backend.API.Middleware;
 
 public class ErrorHandlingMiddleware
 {

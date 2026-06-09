@@ -5,6 +5,7 @@ using YMMO.Backend.Application.DTOs.Agent;
 using YMMO.Backend.Application.DTOs.Property;
 using YMMO.BackEnd.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
+using YMMO.Backend.Domain.Interfaces;
 using YMMO.Backend.Domain.Repositories;
 
 namespace YMMO.Backend.Application.Services;
@@ -14,13 +15,14 @@ public class AgentService : IAgentService
     private readonly IYmmoDbContext _context;
     private readonly IAgentRepository _agentRepository;
     private readonly ILogger<AgentService> _logger;
+    private readonly IPasswordHasher _passwordHasher;
 
-    // Fixed: Initialized all three dependencies in the constructor
-    public AgentService(IYmmoDbContext context, IAgentRepository agentRepository, ILogger<AgentService> logger)
+    public AgentService(IYmmoDbContext context, IAgentRepository agentRepository, ILogger<AgentService> logger,  IPasswordHasher passwordHasher)
     {
         _context = context;
         _agentRepository = agentRepository;
         _logger = logger;
+        _passwordHasher = passwordHasher;
     }
     
     public async Task<AgentContactDto> CreateAgentAsync(CreateAgentDto dto)
@@ -32,12 +34,11 @@ public class AgentService : IAgentService
             Email = dto.Email,
             PhoneNumber = dto.PhoneNumber,
             AgencyID = dto.AgencyID ?? throw new ArgumentNullException(nameof(dto.AgencyID)),
-            // NOTE: N'oublie jamais de hacher le mot de passe avant de le stocker !
+            PasswordHash =  _passwordHasher.Hash(dto.Password)
         };
 
         await _agentRepository.AddAsync(newAgent);
     
-        // Retourne le DTO avec le nouvel ID pour que le front-end le connaisse
         return new AgentContactDto {
             FirstName = newAgent.FirstName,
             LastName = newAgent.LastName,

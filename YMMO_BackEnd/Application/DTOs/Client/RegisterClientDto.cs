@@ -22,5 +22,8 @@ public class RegisterClientDto
     
     // Managed with JWT
     [Required]
-    public string Password { get; set; } = string.Empty; 
+    [MinLength(8, ErrorMessage = "Le mot de passe doit contenir au moins 8 caractères.")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", 
+        ErrorMessage = "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial.")]
+    public string Password { get; set; } = string.Empty;
 }

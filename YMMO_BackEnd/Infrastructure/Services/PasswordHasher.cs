@@ -1,6 +1,6 @@
 using YMMO.Backend.Domain.Interfaces;
 
-namespace YMMO.BackEnd.Infrastructure.Services;
+namespace YMMO.Backend.Infrastructure.Services;
 
 // BCrypt is confined here
 

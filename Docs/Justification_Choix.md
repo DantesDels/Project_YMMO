@@ -474,3 +474,206 @@ Pour garantir l'efficacité de la clause `WHERE` générée par Entity Framework
 
 ---
 
+# Convention de Nommage — Underscore et Encapsulation en C#
+
+## 1. Qu'est-ce que cette convention ?
+
+En C#, préfixer un champ privé avec un underscore (`_`) est la convention
+de nommage standard dans l'écosystème .NET. Elle permet de distinguer
+visuellement trois types de membres d'une classe :
+
+| Membre | Convention | Exemple |
+|---|---|---|
+| Champ privé | `_camelCase` | `_passwordHash` |
+| Propriété publique | `PascalCase` | `PasswordHash` |
+| Variable locale | `camelCase` | `passwordHash` |
+
+Dès que tu vois un `_` dans du code C#, tu sais instantanément :
+**"Ceci est une donnée interne à la classe, inaccessible de l'extérieur."**
+
+---
+
+## 2. Le principe sous-jacent : l'Encapsulation
+
+L'encapsulation est l'un des quatre piliers de la Programmation Orientée
+Objet (POO). Son objectif : **protéger les données internes d'une classe
+et contrôler la façon dont elles sont modifiées**.
+
+Sans encapsulation, n'importe quelle classe externe peut modifier
+directement une donnée sans aucune validation :
+
+```csharp
+// ❌ Sans encapsulation — donnée exposée sans protection
+public class Contact
+{
+    public string PasswordHash { get; set; } // N'importe qui peut écrire n'importe quoi
+}
+
+// Depuis n'importe quelle autre classe :
+contact.PasswordHash = ""; // ← Donnée corrompue, aucune validation
+```
+
+Avec encapsulation et la convention underscore :
+
+```csharp
+// ✅ Avec encapsulation — donnée protégée
+public class Contact
+{
+    // Le coffre-fort : privé, inaccessible de l'extérieur
+    private string _passwordHash;
+
+    // Le guichet : public, lecture seule depuis l'extérieur
+    public string PasswordHash => _passwordHash;
+
+    // Le directeur : seul point d'entrée pour modifier la donnée
+    public void UpdatePassword(string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+            throw new ArgumentException("Password cannot be empty.");
+
+        _passwordHash = BCrypt.HashPassword(newPassword); // Modification contrôlée
+    }
+}
+```
+
+---
+
+## 3. Anatomie détaillée
+
+```csharp
+public class Contact
+{
+    // ─────────────────────────────────────────
+    // LE COFFRE-FORT
+    // ─────────────────────────────────────────
+    // Champ privé — préfixé par _
+    // Stocke la donnée brute en mémoire
+    // Invisible depuis l'extérieur de la classe
+    private string _passwordHash;
+
+    // ─────────────────────────────────────────
+    // LE GUICHET
+    // ─────────────────────────────────────────
+    // Propriété publique — PascalCase, pas de _
+    // Interface de lecture pour le monde extérieur
+    // Délègue l'accès au champ privé
+    public string PasswordHash => _passwordHash;
+
+    // ─────────────────────────────────────────
+    // LE DIRECTEUR
+    // ─────────────────────────────────────────
+    // Seul point d'entrée autorisé pour modifier _passwordHash
+    // Valide la donnée AVANT de la stocker
+    public void UpdatePassword(string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+            throw new ArgumentException("Password cannot be empty.");
+
+        _passwordHash = BCrypt.HashPassword(newPassword);
+    }
+}
+```
+
+---
+
+## 4. La métaphore de la banque
+
+```
+┌─────────────────────────────────────────────────────┐
+│                      BANQUE                         │
+│                                                     │
+│  PasswordHash          _passwordHash                │
+│  (Guichet)             (Coffre-fort)                │
+│                                                     │
+│  ┌──────────┐          ┌──────────────────────┐     │
+│  │ get ✅   │◄────────│  $h0pping6-n3gl1g3nt  │     │
+│  │ set ❌   │          │  (donnée brute)       │     │
+│  └──────────┘          └──────────────────────┘     │
+│       ▲                          ▲                  │
+│       │                          │                  │
+│  Accessible            Modifiable uniquement        │
+│  par tous              via UpdatePassword()         │
+│                        (Le directeur)               │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Exemple concret dans le projet Ymmo
+
+Dans le contexte du projet Ymmo, on retrouve ce pattern dès qu'une
+donnée nécessite une logique de validation avant d'être stockée.
+
+```csharp
+public abstract class Contact
+{
+    // Champs privés — coffres-forts
+    private string _passwordHash;
+    private string _email;
+
+    // Propriétés publiques — guichets en lecture
+    public string PasswordHash => _passwordHash;
+    public string Email => _email;
+
+    // Point d'entrée contrôlé pour le mot de passe
+    public void UpdatePassword(string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+            throw new ArgumentException("Password cannot be empty.");
+
+        if (newPassword.Length < 8)
+            throw new ArgumentException("Password must be at least 8 characters.");
+
+        _passwordHash = BCrypt.HashPassword(newPassword);
+    }
+
+    // Point d'entrée contrôlé pour l'email
+    public void UpdateEmail(string newEmail)
+    {
+        if (string.IsNullOrWhiteSpace(newEmail))
+            throw new ArgumentException("Email cannot be empty.");
+
+        if (!newEmail.Contains('@'))
+            throw new ArgumentException("Invalid email format.");
+
+        _email = newEmail.ToLower().Trim();
+    }
+}
+```
+
+---
+
+## 6. Pourquoi pas simplement un `set` privé ?
+
+Une alternative courante est le `private set` sur une propriété :
+
+```csharp
+public string PasswordHash { get; private set; }
+```
+
+La différence avec le pattern `_field` + méthode :
+
+| | `private set` | `_field` + méthode |
+|---|---|---|
+| Validation possible | ❌ Non | ✅ Oui |
+| Logique avant stockage | ❌ Non | ✅ Oui |
+| Lisibilité de l'intention | Moyenne | Haute |
+| Cas d'usage | Donnée simple | Donnée avec règles métier |
+
+**Règle pratique** : utilise `private set` pour les données simples sans
+logique de validation, et le pattern `_field` + méthode dès qu'une
+règle métier doit être appliquée avant le stockage.
+
+---
+
+## 7. Résumé
+
+```
+_passwordHash  →  Champ privé      →  Le coffre-fort
+PasswordHash   →  Propriété get    →  Le guichet de lecture
+UpdatePassword →  Méthode publique →  Le directeur avec la clé
+```
+
+**L'underscore n'est pas qu'une convention stylistique — c'est un signal
+architectural qui indique qu'une donnée est protégée et que sa
+modification passe obligatoirement par une logique métier validée.**

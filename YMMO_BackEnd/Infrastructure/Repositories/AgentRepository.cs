@@ -13,6 +13,6 @@ public class AgentRepository : BaseRepository<Agent>, IAgentRepository
     {
         return await _dbSet
             .Include(agent => agent.SoldProperties)
-            .FirstOrDefaultAsync(agent => agent.ContactID == id);
+            .FirstOrDefaultAsync(agent => agent.ContactId == id);
     }
 }
