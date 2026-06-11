@@ -13,6 +13,6 @@ public class AgencyRepository : BaseRepository<Agency>, IAgencyRepository
     {
         return await _dbSet
             .Include(agency => agency.Location)
-            .FirstOrDefaultAsync(agency => agency.AgencyID == id);
+            .FirstOrDefaultAsync(agency => agency.AgencyId == id);
     }
 }

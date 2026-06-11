@@ -4,7 +4,7 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Offer
 {
-    public Guid OfferID { get; set; }
+    public Guid OfferID { get; set; } = Guid.NewGuid();
     public required DateTime DateCreated { get; set; }
     
     // Modified and price update dates are null until those events occur

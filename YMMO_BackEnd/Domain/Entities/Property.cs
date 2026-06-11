@@ -6,7 +6,9 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Property
 {
-    public Guid PropertyId { get; set; }
+    public Guid PropertyId { get; set; } = Guid.NewGuid();
+    public required string PropertyName { get; set; }
+    public string? PropertyDescription { get; set; }
     public required DateTime DateListed { get; set; }
     
     // Nullable since it might not be sold initially
@@ -27,26 +29,27 @@ public class Property
     // --- N:1 Relationships --- A property always belongs to an agency and has a location (1,1)
     
     // The agency having the property responsibility
-    public Guid AgencyID { get; set; }
+    public Guid AgencyId { get; set; }
     public Agency Agency { get; set; } = null!;
     
     // The agent responsible for managing this property listing
-    public Guid? AgentID { get; set; }
+    public Guid? AgentId { get; set; }
     public Agent? Agent { get; set; }
     
-    public Guid LocationID { get; set; }
+    public Guid LocationId { get; set; }
     public Location Location { get; set; } = null!;
     
     // A property always has a seller (1,1)
-    public Guid SellerID { get; set; }
+    public Guid SellerId { get; set; }
     public Client Seller { get; set; } = null!;
     
     // Buyer is null until the property is sold (0,1)
-    public Guid? BuyerID { get; set; }
+    public Guid? BuyerId { get; set; }
     public Client? Buyer { get; set; }
     
     
     // --- 1:N Relationships ---
     
+    public ICollection<PropertyPicture> Pictures { get; set; } = new List<PropertyPicture>();
     public ICollection<Offer> Offers { get; set; } = new List<Offer>();
     public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();}

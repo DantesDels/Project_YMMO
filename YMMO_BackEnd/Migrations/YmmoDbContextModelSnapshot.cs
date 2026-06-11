@@ -55,7 +55,7 @@ namespace YMMO.Backend.Migrations
 
             modelBuilder.Entity("YMMO.Backend.Domain.Entities.Contact", b =>
                 {
-                    b.Property<Guid>("ContactID")
+                    b.Property<Guid>("ContactId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -69,21 +69,30 @@ namespace YMMO.Backend.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
-                    b.HasKey("ContactID");
+                    b.HasKey("ContactId");
 
                     b.ToTable("Contacts", (string)null);
 
@@ -159,7 +168,7 @@ namespace YMMO.Backend.Migrations
                     b.Property<Guid>("PropertyID")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("StatusOffer")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -176,17 +185,17 @@ namespace YMMO.Backend.Migrations
 
             modelBuilder.Entity("YMMO.Backend.Domain.Entities.Property", b =>
                 {
-                    b.Property<Guid>("PropertyID")
+                    b.Property<Guid>("PropertyId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AgencyID")
+                    b.Property<Guid>("AgencyId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AgentID")
+                    b.Property<Guid?>("AgentId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("BuyerID")
+                    b.Property<Guid?>("BuyerId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Condition")
@@ -215,13 +224,22 @@ namespace YMMO.Backend.Migrations
                     b.Property<decimal>("InitialPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("LocationID")
+                    b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PropertyDescription")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("PropertyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("PropertyType")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("SellerID")
+                    b.Property<Guid>("SellerId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Surface")
@@ -230,19 +248,46 @@ namespace YMMO.Backend.Migrations
                     b.Property<int>("YearBuilt")
                         .HasColumnType("integer");
 
-                    b.HasKey("PropertyID");
+                    b.HasKey("PropertyId");
 
-                    b.HasIndex("AgencyID");
+                    b.HasIndex("AgencyId");
 
-                    b.HasIndex("AgentID");
+                    b.HasIndex("AgentId");
 
-                    b.HasIndex("BuyerID");
+                    b.HasIndex("BuyerId");
 
-                    b.HasIndex("LocationID");
+                    b.HasIndex("LocationId");
 
-                    b.HasIndex("SellerID");
+                    b.HasIndex("SellerId");
 
                     b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("YMMO.Backend.Domain.Entities.PropertyPicture", b =>
+                {
+                    b.Property<Guid>("PropertyPictureId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("PropertyPictureId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("PropertyPicture");
                 });
 
             modelBuilder.Entity("YMMO.Backend.Domain.Entities.WishlistItem", b =>
@@ -339,29 +384,29 @@ namespace YMMO.Backend.Migrations
                 {
                     b.HasOne("YMMO.Backend.Domain.Entities.Agency", "Agency")
                         .WithMany("Properties")
-                        .HasForeignKey("AgencyID")
+                        .HasForeignKey("AgencyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("YMMO.Backend.Domain.Entities.Agent", "Agent")
-                        .WithMany("SoldProperties")
-                        .HasForeignKey("AgentID")
+                        .WithMany("Properties")
+                        .HasForeignKey("AgentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("YMMO.Backend.Domain.Entities.Client", "Buyer")
                         .WithMany("BoughtProperties")
-                        .HasForeignKey("BuyerID")
+                        .HasForeignKey("BuyerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("YMMO.Backend.Domain.Entities.Location", "Location")
                         .WithMany("Properties")
-                        .HasForeignKey("LocationID")
+                        .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("YMMO.Backend.Domain.Entities.Client", "Seller")
                         .WithMany("OwnedProperties")
-                        .HasForeignKey("SellerID")
+                        .HasForeignKey("SellerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -374,6 +419,17 @@ namespace YMMO.Backend.Migrations
                     b.Navigation("Location");
 
                     b.Navigation("Seller");
+                });
+
+            modelBuilder.Entity("YMMO.Backend.Domain.Entities.PropertyPicture", b =>
+                {
+                    b.HasOne("YMMO.Backend.Domain.Entities.Property", "Property")
+                        .WithMany("Pictures")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("YMMO.Backend.Domain.Entities.WishlistItem", b =>
@@ -434,6 +490,8 @@ namespace YMMO.Backend.Migrations
                 {
                     b.Navigation("Offers");
 
+                    b.Navigation("Pictures");
+
                     b.Navigation("WishlistItems");
                 });
 
@@ -443,7 +501,7 @@ namespace YMMO.Backend.Migrations
 
                     b.Navigation("ManagedOffers");
 
-                    b.Navigation("SoldProperties");
+                    b.Navigation("Properties");
                 });
 
             modelBuilder.Entity("YMMO.Backend.Domain.Entities.Client", b =>

@@ -4,13 +4,13 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Agency
 {
-    public Guid AgencyID { get; set; }
+    public Guid AgencyId { get; set; } = Guid.NewGuid();
     public required string Name { get; set; }
     public required string PhoneNumber { get; set; }
     public required string Email { get; set; }
     
     // N:1 Relationship - An agency is located at one specific Location
-    public Guid LocationID { get; set; }
+    public Guid LocationId { get; set; }
     public Location Location { get; set; } = null!;
     
     // 1:N Relationships

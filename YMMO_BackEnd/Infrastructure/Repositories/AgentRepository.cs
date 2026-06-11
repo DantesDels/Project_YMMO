@@ -25,6 +25,6 @@ public class AgentRepository : BaseRepository<Agent>, IAgentRepository
     {
         // On utilise CountAsync sur la requête pour ne pas charger les propriétés en mémoire
         return await _context.Properties
-            .CountAsync(p => p.AgentID == agentId && p.DateSold != null);
+            .CountAsync(p => p.AgentId == agentId && p.DateSold != null);
     }
 }

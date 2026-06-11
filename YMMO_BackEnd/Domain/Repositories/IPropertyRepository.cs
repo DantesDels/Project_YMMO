@@ -5,7 +5,11 @@ namespace YMMO.Backend.Domain.Repositories;
 
 public interface IPropertyRepository : IBaseRepository<Property>
 {
-    Task<IEnumerable<Property>> GetAvailablePropertiesAsync();
+    // Basic Property management
     Task<IEnumerable<Property>> GetPropertiesByAgencyAsync(Guid agencyId);
-    Task<IEnumerable<Property>> GetPropertiesByCriteriaAsync(PropertySearchCriteria criteria);
+    
+    // Pictures management
+    Task AddPictureToPropertyAsync(Guid propertyId, PropertyPicture picture);
+    Task UpdatePictureToPropertyAsync(Guid propertyId, PropertyPicture picture);
+    Task DeletePictureToPropertyAsync(Guid propertyId, Guid pictureId);
 }

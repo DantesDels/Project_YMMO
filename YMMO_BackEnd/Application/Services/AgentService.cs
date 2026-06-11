@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using YMMO.Backend.Application.Interfaces;
 using YMMO.Backend.Application.DTOs.Agent;
 using YMMO.Backend.Application.DTOs.Property;
-using YMMO.BackEnd.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
 using YMMO.Backend.Domain.Enums;
 using YMMO.Backend.Domain.Interfaces;
@@ -107,7 +106,7 @@ public class AgentService : IAgentService
 
     public async Task UpdatePasswordAsync(Guid agentId, string newPassword)
     {
-        // Sécurité : seul l'admin ou l'agent lui-même peut changer son mot de passe
+        // Security : only admin or agent itself can change the password
         var currentUserId = _userAccessor.GetCurrentUserId();
         if (currentUserId != agentId && _userAccessor.GetCurrentUserRole() != ContactRole.Admin)
             throw new UnauthorizedAccessException("Non autorisé.");

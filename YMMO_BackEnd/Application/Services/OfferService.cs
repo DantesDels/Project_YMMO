@@ -2,7 +2,6 @@
 using YMMO.Backend.Application.DTOs.Offer;
 using YMMO.Backend.Application.DTOs.Offers;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.BackEnd.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
 using YMMO.Backend.Domain.Enums;
 using YMMO.Backend.Domain.Repositories;

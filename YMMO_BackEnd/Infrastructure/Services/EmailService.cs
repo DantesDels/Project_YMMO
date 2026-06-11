@@ -2,8 +2,9 @@
 using MimeKit;
 using Microsoft.Extensions.Options;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.Backend.Infrastructure.Configuration;
 using YMMO.Backend.Infrastructure.Data.Configurations;
+
+namespace YMMO.Backend.Infrastructure.Services;
 
 public class EmailService : IEmailService
 {

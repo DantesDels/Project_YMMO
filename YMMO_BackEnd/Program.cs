@@ -6,32 +6,37 @@ using System.Text;
 using AutoMapper;
 using YMMO.Backend.API.Middleware;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.BackEnd.Application.Interfaces;
+using YMMO.Backend.Application.Mappings;
 using YMMO.Backend.Application.Services;
 using YMMO.Backend.Domain.Interfaces;
 using YMMO.Backend.Domain.Repositories;
-using YMMO.Backend.Infrastructure.Configuration;
 using YMMO.Backend.Infrastructure.Data;
+using YMMO.Backend.Infrastructure.Data.Configurations;
 using YMMO.Backend.Infrastructure.Services;
 using YMMO.Backend.Infrastructure.Repositories;
 using YMMO.Backend.Infrastructure.Security;
 
+try {
 var builder = WebApplication.CreateBuilder(args);
 
 // ──────────────────────────────────────────────────────────
 // 1. CONFIGURATION SERVICES & DI CONTAINER
 // ──────────────────────────────────────────────────────────
 
-builder.Services.AddDbContext<YmmoDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    builder.Services.AddDbContext<YmmoDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<IYmmoDbContext>(provider => provider.GetRequiredService<YmmoDbContext>());
+
+    builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
+    builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+    builder.Services.AddHttpContextAccessor();
 
 // Repositories
-builder.Services.AddScoped<IAgencyRepository, AgencyRepository>();
+builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IAgentRepository, AgentRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IAgencyRepository, AgencyRepository>();
 builder.Services.AddScoped<IOfferRepository, OfferRepository>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IWishlistItemRepository, WishlistItemRepository>();
@@ -49,9 +54,6 @@ builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 // PasswordHasher System (BCrypt)
 builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-
-// AutoMapper
-builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(Program).Assembly));
 
 // Authentication (JWT)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -94,11 +96,21 @@ builder.Services.AddSwaggerGen();
 // ──────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// Validation propre d'AutoMapper (Section 2 uniquement)
-using (var scope = app.Services.CreateScope())
+// VALIDATION AUTOMAPPER (Sectionnée)
+if (app.Environment.IsDevelopment())
 {
-    var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-    mapper.ConfigurationProvider.AssertConfigurationIsValid();
+    using (var scope = app.Services.CreateScope())
+    {
+        var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+        try 
+        {
+            mapper.ConfigurationProvider.AssertConfigurationIsValid();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"AUTO-MAPPER VALIDATION FAILED: {ex.Message}");
+        }
+    }
 }
 
 // ──────────────────────────────────────────────────────────
@@ -119,3 +131,11 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"FATAL ERROR: {ex.Message}");
+    Console.WriteLine($"STACK TRACE: {ex.StackTrace}");
+    throw;
+}

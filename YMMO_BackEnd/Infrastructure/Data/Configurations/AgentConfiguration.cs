@@ -20,7 +20,7 @@ public class AgentConfiguration : IEntityTypeConfiguration<Agent>
         // Property (1:N)
         builder.HasMany(a => a.Properties)
             .WithOne(p => p.Agent)
-            .HasForeignKey(p => p.AgentID)
+            .HasForeignKey(p => p.AgentId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

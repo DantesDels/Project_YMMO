@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YMMO.Backend.Domain.Entities;
 
-namespace YMMO.BackEnd.Application.Interfaces;
+namespace YMMO.Backend.Application.Interfaces;
 
 public interface IYmmoDbContext
 {
@@ -12,6 +12,7 @@ public interface IYmmoDbContext
     DbSet<Location> Locations { get; }
     DbSet<Offer> Offers { get; }
     DbSet<Property> Properties { get; }
+    DbSet<PropertyPicture> PropertyPicture { get; }
     DbSet<WishlistItem> Wishlists { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

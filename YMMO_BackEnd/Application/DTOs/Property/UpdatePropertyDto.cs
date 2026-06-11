@@ -6,6 +6,12 @@ namespace YMMO.Backend.Application.DTOs.Property;
 
 public class UpdatePropertyDto
 {
+    [Required, StringLength(200)]
+    public string PropertyName { get; set; } = string.Empty;
+
+    [StringLength(2000)]
+    public string? PropertyDescription { get; set; }
+    
     [Required]
     [Range(1, 100_000_000)]
     public decimal CurrentPrice { get; set; } // Agent can lower the price
