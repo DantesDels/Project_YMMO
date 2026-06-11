@@ -1,4 +1,5 @@
 ﻿using YMMO.Backend.Application.DTOs.Property;
+using YMMO.Backend.Domain.Entities;
 
 namespace YMMO.Backend.Application.Interfaces;
 
@@ -14,4 +15,9 @@ public interface IPropertyService
     
     // Deletion: Authorized access only
     Task<bool> DeletePropertyAsync(Guid id);
+    
+    // Property Pictures management
+    Task AddPictureToPropertyAsync(Guid propertyId, PropertyPicture picture);
+    Task UpdatePictureToPropertyAsync(Guid propertyId, PropertyPicture picture);
+    Task DeletePictureToPropertyAsync(Guid propertyId, Guid pictureId);
 }

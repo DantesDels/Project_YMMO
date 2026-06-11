@@ -2,7 +2,7 @@
 
 public class WishlistItem
 {
-    public Guid WishlistItemID { get; set; }
+    public Guid WishlistItemID { get; set; } = Guid.NewGuid();
     
     // N:1 Relationships
     public Guid ClientID { get; set; }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YMMO.Backend.Domain.Entities;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.BackEnd.Application.Interfaces;
 
 namespace YMMO.Backend.Infrastructure.Data;
 
@@ -17,6 +16,7 @@ public class YmmoDbContext : DbContext, IYmmoDbContext
     public DbSet<Location> Locations { get; set; }
     public DbSet<Offer> Offers { get; set; }
     public DbSet<Property> Properties { get; set; }
+    public DbSet<PropertyPicture> PropertyPicture { get; set; }
     public DbSet<WishlistItem> Wishlists { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

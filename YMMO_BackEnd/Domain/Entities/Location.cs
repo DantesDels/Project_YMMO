@@ -4,7 +4,7 @@ namespace YMMO.Backend.Domain.Entities;
 
 public class Location
 {
-    public Guid LocationID { get; set; }
+    public Guid LocationId { get; set; } = Guid.NewGuid();
     public required string Address { get; set; }
     public required string City { get; set; }
     public required string Region { get; set; }

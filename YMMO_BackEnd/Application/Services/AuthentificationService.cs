@@ -37,11 +37,16 @@ public class AuthentificationService : IAuthentificationService
         _userAccessor = userAccessor;
     }
     
-    public async Task<bool> UpdatePasswordAsync(Guid contactId, UpdatePasswordDto dto)
+    public async Task<bool> UpdatePasswordAsync(UpdatePasswordDto dto)
     {
+        var contactId = _userAccessor.GetCurrentUserId();
         var contact = await _contactRepository.GetByIdAsync(contactId);
-        if (contact == null) throw new KeyNotFoundException("Contact introuvable.");
-
+        
+        if (contact == null) 
+        {
+            throw new KeyNotFoundException("Le compte utilisateur est introuvable en base de données.");
+        }
+        
         if (!_passwordHasher.Verify(dto.OldPassword, contact.PasswordHash))
         {
             throw new UnauthorizedAccessException("L'ancien mot de passe est incorrect.");

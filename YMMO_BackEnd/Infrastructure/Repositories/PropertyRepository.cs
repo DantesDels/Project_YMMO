@@ -20,9 +20,48 @@ public class PropertyRepository : BaseRepository<Property>, IPropertyRepository
     public async Task<IEnumerable<Property>> GetPropertiesByAgencyAsync(Guid agencyId)
     {
         return await _dbSet
-            .Where(property => property.AgencyID == agencyId)
+            .Where(property => property.AgencyId == agencyId)
             .ToListAsync();
     }
+    
+    public async Task AddPictureToPropertyAsync(Guid propertyId, PropertyPicture picture)
+    {
+        var property = await _context.Properties
+            .Include(p => p.Pictures)
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId);
+
+        if (property == null) throw new KeyNotFoundException("Propriété non trouvée.");
+
+        property.Pictures.Add(picture);
+    
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdatePictureToPropertyAsync(Guid propertyId, PropertyPicture picture)
+    {
+        var existingPicture = await _context.PropertyPicture
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId && p.PropertyPictureId == picture.PropertyPictureId);
+
+        if (existingPicture == null) throw new KeyNotFoundException("Photo non trouvé.");
+
+        existingPicture.Url = picture.Url;
+        existingPicture.DisplayOrder = picture.DisplayOrder;
+        existingPicture.IsMain = picture.IsMain;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeletePictureToPropertyAsync(Guid propertyId, Guid pictureId)
+    {
+        var pictureToDelete = await _context.PropertyPicture
+            .FirstOrDefaultAsync(p => p.PropertyId == propertyId && p.PropertyPictureId == pictureId);
+
+        if (pictureToDelete == null) throw new KeyNotFoundException("Photo non trouvé.");
+
+        _context.PropertyPicture.Remove(pictureToDelete);
+        await _context.SaveChangesAsync();
+    }
+    
 
     public async Task<IEnumerable<Property>> GetPropertiesByCriteriaAsync(PropertySearchCriteria criteria)
     {

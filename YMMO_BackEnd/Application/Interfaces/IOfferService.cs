@@ -1,7 +1,7 @@
 ﻿using YMMO.Backend.Application.DTOs.Offer;
 using YMMO.Backend.Application.DTOs.Offers; 
 
-namespace YMMO.BackEnd.Application.Interfaces;
+namespace YMMO.Backend.Application.Interfaces;
 
 public interface IOfferService
 { 

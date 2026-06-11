@@ -1,4 +1,4 @@
-﻿namespace YMMO.Backend.Infrastructure.Configuration;
+﻿namespace YMMO.Backend.Infrastructure.Data.Configurations;
 
 public class EmailSettings
 {

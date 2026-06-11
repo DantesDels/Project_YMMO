@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using YMMO.Backend.Application.DTOs.Offer;
 using YMMO.Backend.Application.DTOs.Offers;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.BackEnd.Application.Interfaces;
 
-namespace YMMO.BackEnd.API.Controllers;
+namespace YMMO.Backend.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

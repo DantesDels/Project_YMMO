@@ -7,6 +7,12 @@ namespace YMMO.Backend.Application.DTOs.Property;
 
 public class CreatePropertyDto
 {
+    [Required, StringLength(200)]
+    public string PropertyName { get; set; } = string.Empty;
+
+    [StringLength(2000)]
+    public string? PropertyDescription { get; set; }
+
     [Required]
     public PropertyType PropertyType { get; set; }
     
@@ -18,12 +24,10 @@ public class CreatePropertyDto
     
     public EnergyClass EnergyClass { get; set; }
 
-    [Required]
-    [Range(1, 100_000_000)]
+    [Required, Range(1, 100_000_000)]
     public decimal InitialPrice { get; set; }
     
-    [Required]
-    [Range(9, 10_000)]
+    [Required, Range(9, 10_000)]
     public decimal Surface { get; set; }
 
     public List<Criteria> Features { get; set; } = new();
@@ -32,11 +36,11 @@ public class CreatePropertyDto
     public CreateLocationDto Location { get; set; } = null!;
 
     [Required]
-    public Guid AgencyID { get; set; }
+    public Guid AgencyId { get; set; } 
     
     [Required]
-    public Guid AgentID { get; set; }
+    public Guid AgentId { get; set; }  
     
     [Required]
-    public Guid SellerID { get; set; }
+    public Guid SellerId { get; set; } 
 }
