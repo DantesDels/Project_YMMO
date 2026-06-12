@@ -1,0 +1,32 @@
+﻿:root {
+    /* Colors */
+    --color-primary: #1e2956;    /* Dark blue (banner) */
+    --color-secondary: #004ecc;   /* Clear, vibrant blue (buttons, highlights) */
+    --color-accent: #aa3bff;      /* Purple (optional accent) */
+    --color-bg: #f3f4f6;          /* Light gray for page background */
+    --color-text-main: #333;
+
+    /* Typography */
+    --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Poppins', var(--font-sans); /* Requires loading Poppins font */
+}
+
+body {
+    margin: 0;
+    font: 18px/145% var(--font-sans);
+    color: var(--color-text-main);
+    background: var(--color-bg);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto; /* C'est lui qui gère le centrage */
+    padding: 0 1rem;
+}
+
+h1, h2, h3 { 
+    font-family: var(--font-heading); 
+    color: var(--color-primary);
+    text-align: center;
+}

@@ -1,19 +1,19 @@
 ﻿<template>
-  <div class="border rounded-lg p-4 shadow hover:shadow-lg transition">
-    <h3 class="text-xl font-semibold">{{ property.propertyName }}</h3>
-    <p class="text-gray-600">{{ property.city }} ({{ property.postalCode }})</p>
-    <p class="mt-2 text-blue-600 font-bold">{{ property.currentPrice }} €</p>
-    <div class="mt-2 flex flex-wrap gap-1">
-      <span v-for="feat in property.mainFeatures" :key="feat"
-            class="bg-gray-200 text-xs px-2 py-1 rounded">{{ feat }}</span>
+  <div class="property-card">
+    <div class="card-img-wrapper">
+      <img src="..." alt="Logement" />
+      <span class="card-badge">Promotion</span>
+    </div>
+    <div class="card-content">
+      <h3 class="card-title">Logement en résidence</h3>
+      <p class="card-price">650€ / mois</p>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import type { PropertySummaryDto } from '@/types'
-
-defineProps<{
-  property: PropertySummaryDto
-}>()
-</script>
+<style scoped>
+/* CSS local au composant : pas besoin d'importer, c'est appliqué ici uniquement */
+.property-card { @apply bg-white border rounded-2xl overflow-hidden hover:shadow-xl transition; }
+.card-img-wrapper { @apply h-48 bg-gray-200; }
+.card-content { @apply p-4; }
+</style>
