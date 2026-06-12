@@ -2,6 +2,13 @@
 
 public enum Criteria
 {
+    // --- Typologie (Number of rooms) ---
+    Studio,             // Studio (T1/T1bis)
+    T2,                 // T2
+    T3,                 // T3
+    T4,                 // T4
+    T5Plus,             // T5 et plus
+    
     // --- Extérieurs et Annexes (Outdoors & Annexes) ---
     Balcony,            // Balcon
     Terrace,            // Terrasse
