@@ -66,11 +66,13 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue';
+import { useFilterStore } from '@/stores/filterStore';
 import AppButton from '@/components/ui/AppButton.vue';
 import { formatNumber, parseNumber } from '@/utils/formatters';
 
 const activeMenu = ref(null);
 const closeMenu = () => activeMenu.value = null;
+const filterStore = useFilterStore();
 
 const vClickOutside = {
   mounted(el, binding) {
@@ -84,6 +86,17 @@ const vClickOutside = {
 
 const filters = reactive({ city: '', types: [], minPrice: 200000, maxPrice: 5000000, requiredCriteria: [] });
 
+const onSearch = () => {
+  filterStore.updateFilters({
+    city: filters.city,
+    types: filters.types,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    requiredCriteria: filters.requiredCriteria
+  });
+  console.log("Filtres envoyés au store :", filterStore.filters);
+};
+
 const displayTypes = computed(() => {
   if (filters.types.length === 0) return 'Tous';
   const labels = filters.types.map(t => propertyTypeMap[t]);
@@ -93,7 +106,6 @@ const displayTypes = computed(() => {
 const updateMin = (val) => { const p = parseNumber(val); if (p <= filters.maxPrice) filters.minPrice = p; };
 const updateMax = (val) => { const p = parseNumber(val); if (p >= filters.minPrice) filters.maxPrice = p; };
 const toggleMenu = (menu) => activeMenu.value = (activeMenu.value === menu ? null : menu);
-const onSearch = () => console.log('Recherche :', filters);
 
 const propertyTypeMap = { 'House': 'Maison', 'Apartment': 'Appart', 'Land': 'Terrain', 'Commercial': 'Local', 'Office': 'Bureau', 'Garage': 'Box', 'Parking': 'Parking' };
 const criteriaGroups = { 'Typologie': ['Studio', 'T2', 'T3', 'T4', 'T5Plus'], 'Extérieurs': ['Balcony', 'Terrace', 'Garden', 'Garage', 'Parking', 'Cellar', 'SwimmingPool'], 'Confort': ['Elevator', 'AirConditioning', 'Fireplace', 'Furnished', 'HardwoodFloor', 'DoubleGlazing', 'FittedKitchen'], 'Sécurité': ['Digicode', 'Intercom', 'AlarmSystem', 'SecurityDoor', 'DisabledAccess', 'Caretaker'], 'Vues': ['SeaView', 'MountainView', 'UnobstructedView', 'SouthFacing'], 'Tech & Énergie': ['FiberOptic', 'SmartHome', 'HeatPump', 'SolarPanels'] };

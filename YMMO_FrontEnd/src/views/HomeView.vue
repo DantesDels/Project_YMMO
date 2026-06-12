@@ -4,7 +4,7 @@
     <CityGrid />
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-      <PropertiesResult :properties="mockProperties" />
+      <PropertiesResult :allProperties="mockProperties" />
     </main>
   </div>
 </template>
@@ -17,7 +17,6 @@ import PropertiesResult from '@/components/PropertiesResult.vue';
 import { generateMockProperties } from '@/utils/mockData';
 
 const mockProperties = ref([]);
-
 onMounted(() => {
   mockProperties.value = generateMockProperties(40);
 });

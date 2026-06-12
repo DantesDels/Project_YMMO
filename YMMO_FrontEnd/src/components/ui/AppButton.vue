@@ -1,7 +1,11 @@
 ﻿<template>
-  <router-link :to="to" class="btn-primary">
+  <router-link v-if="to" :to="to" class="btn-primary">
     <slot />
   </router-link>
+
+  <button v-else class="btn-primary" type="button">
+    <slot />
+  </button>
 </template>
 
 <script setup>
@@ -25,11 +29,13 @@ defineProps({
   text-decoration: none;
   transition: all 0.3s ease;
   min-width: fit-content;
+  border: none; /* Important pour les boutons */
+  cursor: pointer;
 }
 
 .btn-primary:hover {
   background-color: #3b4a8a;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(30, 41, 86, 0.2);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 </style>

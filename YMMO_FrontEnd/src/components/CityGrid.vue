@@ -85,5 +85,6 @@ const handleImageError = (event) => {
 .city-card:hover .city-name {
   background: rgba(30, 41, 86, 0.9);
   transform: scale(1.05);
+  box-shadow: 3px 4px 12px rgba(30, 41, 86, 1.2);
 }
 </style>
