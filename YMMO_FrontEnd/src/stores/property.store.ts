@@ -35,6 +35,23 @@ export const usePropertyStore = defineStore('property', () => {
     _setLoading()
     try {
       properties.value = await searchService.search(criteria)
+      isLoading.value = false
+    } catch (e) { _setError(e) }
+  }
+
+  // Lance un appel par critère (utilisé quand plusieurs PropertyType
+  // sont sélectionnés — voir filterStore.toApiCriteria()), fusionne
+  // et déduplique les résultats sur propertyId.
+  async function searchMultiple(criteriaList: Partial<PropertySearchCriteriaDto>[]): Promise<void> {
+    _setLoading()
+    try {
+      const results = await Promise.all(
+          criteriaList.map(c => searchService.search(c))
+      )
+      const merged = new Map<string, PropertySummaryDto>()
+      results.flat().forEach(p => merged.set(p.propertyId, p))
+      properties.value = Array.from(merged.values())
+      isLoading.value = false
     } catch (e) { _setError(e) }
   }
 
@@ -44,8 +61,8 @@ export const usePropertyStore = defineStore('property', () => {
       currentProperty.value = await propertyService.getById(id)
       // Charge les suggestions en parallèle, sans bloquer
       searchService.getSuggestions(id)
-        .then(s => { suggestions.value = s })
-        .catch(() => {})
+          .then(s => { suggestions.value = s })
+          .catch(() => {})
     } catch (e) { _setError(e) }
   }
 
@@ -81,6 +98,6 @@ export const usePropertyStore = defineStore('property', () => {
 
   return {
     properties, currentProperty, suggestions, isLoading, error,
-    fetchAll, search, fetchById, create, update, remove,
+    fetchAll, search, searchMultiple, fetchById, create, update, remove,
   }
 })

@@ -1,131 +1,276 @@
-﻿<template>
-  <div class="search-container" v-click-outside="closeMenu">
+﻿<!--
+  SearchBar.vue
+  ─────────────────────────────────────────────────────────────
+  N'appelle PAS le backend directement. Écrit dans le filterStore.
+  C'est le composant parent (HomeView / SearchView) qui décide
+  quoi faire de ces filtres :
+    - mode mock   → PropertiesResult filtre generateMockProperties()
+    - mode API    → property.store.search(filterStore.toApiCriteria())
+
+  Émet "search" pour signaler au parent qu'une recherche est
+  déclenchée (utile en mode API pour lancer le fetch).
+-->
+<template>
+  <div class="search-container">
     <div class="search-bar">
-      <div class="field location">
-        <label>Localisation</label>
-        <input type="text" placeholder="Ville, quartier..." v-model="filters.city" @click.stop />
-      </div>
 
-      <div class="field" @click="toggleMenu('type')">
-        <label>Type</label>
-        <span class="value truncated">{{ displayTypes }}</span>
-        <div v-if="activeMenu === 'type'" class="popover" @click.stop>
-          <label v-for="(label, key) in propertyTypeMap" :key="key" class="checkbox-item">
-            <input type="checkbox" :value="key" v-model="filters.types" /> {{ label }}
-          </label>
-        </div>
-      </div>
+      <SearchField v-model="city" placeholder="Ville, code postal..." />
 
-      <div class="field" @click="toggleMenu('price')">
-        <label>Budget</label>
-        <span class="value">{{ formatNumber(filters.minPrice) }}€ - {{ formatNumber(filters.maxPrice) }}€</span>
-        <div v-if="activeMenu === 'price'" class="popover" @click.stop>
-          <div class="range-inputs">
-            <div class="input-wrapper">
-              <label class="input-label">Budget min</label>
-              <div class="input-with-symbol">
-                <input type="text" :value="formatNumber(filters.minPrice)" @input="e => updateMin(e.target.value)" />
-                <span>€</span>
-              </div>
-            </div>
-            <div class="input-wrapper">
-              <label class="input-label">Budget max</label>
-              <div class="input-with-symbol">
-                <input type="text" :value="formatNumber(filters.maxPrice)" @input="e => updateMax(e.target.value)" />
-                <span>€</span>
-              </div>
-            </div>
-          </div>
-          <div class="slider-container">
-            <div class="slider-track"></div>
-            <input type="range" :value="filters.minPrice" @input="e => updateMin(e.target.value)" min="0" max="5000000" step="1000" />
-            <input type="range" :value="filters.maxPrice" @input="e => updateMax(e.target.value)" min="0" max="5000000" step="1000" />
-          </div>
-        </div>
-      </div>
+      <SearchDropdown
+          v-model="selectedTypes"
+          label="Type"
+          :options="propertyTypeMap"
+      />
 
-      <div class="field" @click="toggleMenu('criteria')">
-        <label>Critères</label>
-        <span class="value">{{ filters.requiredCriteria.length }} sélectionnés</span>
-        <div v-if="activeMenu === 'criteria'" class="popover scrollable" @click.stop>
-          <template v-for="(group, key) in criteriaGroups" :key="key">
-            <div class="group-title">{{ key }}</div>
-            <label v-for="c in group" :key="c" class="checkbox-item">
-              <input type="checkbox" :value="c" v-model="filters.requiredCriteria" />
-              {{ translateCriteria(c) }}
-            </label>
-            <div class="separator"></div>
-          </template>
-        </div>
-      </div>
+      <SearchDropdown
+          v-model="selectedRoomCapacity"
+          label="Pièces"
+          :options="roomCapacityMap"
+      />
 
-      <AppButton @click="onSearch" class="search-btn">Rechercher</AppButton>
+      <SearchDropdown
+          v-model="selectedEnergyClass"
+          label="DPE"
+          :options="energyClassMap"
+      />
+
+      <SearchDropdown
+          v-model="selectedPhysicalCondition"
+          label="État"
+          :options="physicalConditionMap"
+      />
+
+      <SearchDropdownExtended
+          v-model="selectedCriteria"
+          label="Critères"
+          :options="criteriaMap"
+          empty-label="Aucun"
+      />
+
+      <AppButton class="search-btn" @click="onSearch">
+        Rechercher
+      </AppButton>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { useFilterStore } from '@/stores/filterStore';
+import { ref, watch } from 'vue';
 import AppButton from '@/components/ui/AppButton.vue';
-import { formatNumber, parseNumber } from '@/utils/formatters';
+import SearchField from '@/components/ui/SearchField.vue';
+import SearchDropdown from '@/components/ui/SearchDropdown.vue';
+import SearchDropdownExtended from '@/components/ui/SearchDropdownExtended.vue';
+import { useFilterStore } from '@/stores/filterStore';
 
-const activeMenu = ref(null);
-const closeMenu = () => activeMenu.value = null;
 const filterStore = useFilterStore();
+const emit = defineEmits(['search']);
 
-const vClickOutside = {
-  mounted(el, binding) {
-    el.clickOutsideEvent = (event) => {
-      if (!(el === event.target || el.contains(event.target))) binding.value();
-    };
-    document.body.addEventListener('click', el.clickOutsideEvent);
-  },
-  unmounted(el) { document.body.removeEventListener('click', el.clickOutsideEvent); }
+// ── État local — synchronisé vers le filterStore ──────────────
+const city = ref(filterStore.filters.city);
+const selectedTypes = ref([...filterStore.filters.types]);
+
+// rooms est un number? singulier dans filterStore → on le wrappe
+// dans un tableau pour SearchDropdown, on ne garde que le 1er élément
+const selectedRoomCapacity = ref(
+    filterStore.filters.rooms ? [String(filterStore.filters.rooms)] : []
+);
+
+// condition / energyClass sont des string singuliers → idem
+const selectedEnergyClass = ref(
+    filterStore.filters.energyClass ? [filterStore.filters.energyClass] : []
+);
+const selectedPhysicalCondition = ref(
+    filterStore.filters.condition ? [filterStore.filters.condition] : []
+);
+
+// requiredCriteria est déjà un tableau → multi-select natif
+const selectedCriteria = ref([...filterStore.filters.requiredCriteria]);
+
+// ── Maps d'options (miroir des enums C#) ──────────────────────
+
+const propertyTypeMap = {
+  House: 'Maison',
+  Apartment: 'Appartement',
+  Land: 'Terrain',
+  Commercial: 'Local',
+  Office: 'Bureau',
+  Garage: 'Garage',
+  Parking: 'Parking',
 };
 
-const filters = reactive({ city: '', types: [], minPrice: 200000, maxPrice: 5000000, requiredCriteria: [] });
+// Pas de champ "rooms" dans PropertySearchCriteriaDto côté backend —
+// filtre purement local (mode mock) pour l'instant
+const roomCapacityMap = {
+  '1': '1 pièce',
+  '2': '2 pièces',
+  '3': '3 pièces',
+  '4': '4 pièces',
+  '5': '5 pièces et +',
+};
 
+// Miroir de Domain/Enums/EnergyClass.cs
+const energyClassMap = {
+  A: 'A',
+  B: 'B',
+  C: 'C',
+  D: 'D',
+  E: 'E',
+  F: 'F',
+  G: 'G',
+  Exempt: 'Non soumis au DPE',
+};
+
+// Miroir de Domain/Enums/PhysicalCondition.cs
+const physicalConditionMap = {
+  New: 'Neuf',
+  Excellent: 'Excellent état',
+  Good: 'Bon état',
+  NeedsRefresh: 'À rafraîchir',
+  NeedsRenovation: 'À rénover',
+  Ruin: 'Ruine',
+};
+
+// Miroir de Domain/Entities/Enums/Criteria.cs (27 valeurs)
+const criteriaMap = {
+  "Extérieurs et Annexes": {
+    Balcony: 'Balcon',
+    Terrace: 'Terrasse',
+    Garden: 'Jardin',
+    Garage: 'Garage fermé',
+    Parking: 'Parking',
+    Cellar: 'Cave',
+    SwimmingPool: 'Piscine'
+  },
+  "Intérieur et Confort": {
+    Elevator: 'Ascenseur',
+    AirConditioning: 'Climatisation',
+    Fireplace: 'Cheminée',
+    Furnished: 'Meublé',
+    HardwoodFloor: 'Parquet',
+    DoubleGlazing: 'Double vitrage',
+    FittedKitchen: 'Cuisine équipée'
+  },
+  "Sécurité et Vues": {
+    Digicode: 'Digicode',
+    Intercom: 'Interphone',
+    AlarmSystem: 'Alarme',
+    SecurityDoor: 'Porte blindée',
+    Caretaker: 'Gardien',
+    SeaView: 'Vue mer',
+    MountainView: 'Vue montagne',
+    UnobstructedView: 'Vue dégagée',
+    SouthFacing: 'Exposition sud'
+  },
+  "Tech & Énergie": {
+    DisabledAccess: 'Accès PMR',
+    FiberOptic: 'Fibre optique',
+    SmartHome: 'Domotique',
+    HeatPump: 'Pompe à chaleur',
+    SolarPanels: 'Panneaux solaires'
+  }
+};
+
+// ── Soumission ─────────────────────────────────────────────────
 const onSearch = () => {
   filterStore.updateFilters({
-    city: filters.city,
-    types: filters.types,
-    minPrice: filters.minPrice,
-    maxPrice: filters.maxPrice,
-    requiredCriteria: filters.requiredCriteria
+    city: city.value,
+    types: selectedTypes.value,
   });
-  console.log("Filtres envoyés au store :", filterStore.filters);
+  emit('search');
 };
 
-const displayTypes = computed(() => {
-  if (filters.types.length === 0) return 'Tous';
-  const labels = filters.types.map(t => propertyTypeMap[t]);
-  return labels.length > 3 ? labels.slice(0, 3).join(', ') + '...' : labels.join(', ');
+// ── Watchers : synchronisation vers filterStore ─────────────────
+
+// Recherche "live" sur la ville : debounce léger pour ne pas
+// spammer le filtre à chaque frappe
+let debounceTimer;
+watch(city, (val) => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    filterStore.updateFilters({ city: val });
+    emit('search');
+  }, 300);
 });
 
-const updateMin = (val) => { const p = parseNumber(val); if (p <= filters.maxPrice) filters.minPrice = p; };
-const updateMax = (val) => { const p = parseNumber(val); if (p >= filters.minPrice) filters.maxPrice = p; };
-const toggleMenu = (menu) => activeMenu.value = (activeMenu.value === menu ? null : menu);
+// Le changement de type est appliqué immédiatement (pas de debounce)
+watch(selectedTypes, (val) => {
+  filterStore.updateFilters({ types: [...val] });
+  emit('search');
+}, { deep: true });
 
-const propertyTypeMap = { 'House': 'Maison', 'Apartment': 'Appart', 'Land': 'Terrain', 'Commercial': 'Local', 'Office': 'Bureau', 'Garage': 'Box', 'Parking': 'Parking' };
-const criteriaGroups = { 'Typologie': ['Studio', 'T2', 'T3', 'T4', 'T5Plus'], 'Extérieurs': ['Balcony', 'Terrace', 'Garden', 'Garage', 'Parking', 'Cellar', 'SwimmingPool'], 'Confort': ['Elevator', 'AirConditioning', 'Fireplace', 'Furnished', 'HardwoodFloor', 'DoubleGlazing', 'FittedKitchen'], 'Sécurité': ['Digicode', 'Intercom', 'AlarmSystem', 'SecurityDoor', 'DisabledAccess', 'Caretaker'], 'Vues': ['SeaView', 'MountainView', 'UnobstructedView', 'SouthFacing'], 'Tech & Énergie': ['FiberOptic', 'SmartHome', 'HeatPump', 'SolarPanels'] };
-const translateCriteria = (key) => ({ 'Balcony': 'Balcon', 'Terrace': 'Terrasse', 'Garden': 'Jardin', 'Garage': 'Garage', 'Parking': 'Parking', 'Cellar': 'Cave', 'SwimmingPool': 'Piscine', 'Elevator': 'Ascenseur', 'AirConditioning': 'Climatisation', 'Fireplace': 'Cheminée', 'Furnished': 'Meublé', 'HardwoodFloor': 'Parquet', 'DoubleGlazing': 'Double vitrage', 'FittedKitchen': 'Cuisine équipée', 'Digicode': 'Digicode', 'Intercom': 'Interphone', 'AlarmSystem': 'Alarme', 'SecurityDoor': 'Porte blindée', 'DisabledAccess': 'Accès PMR', 'Caretaker': 'Gardien', 'SeaView': 'Vue mer', 'MountainView': 'Vue montagne', 'UnobstructedView': 'Vue dégagée', 'SouthFacing': 'Plein sud', 'FiberOptic': 'Fibre optique', 'SmartHome': 'Domotique', 'HeatPump': 'Pompe à chaleur', 'SolarPanels': 'Panneaux solaires', 'Studio': 'Studio', 'T2': 'T2', 'T3': 'T3', 'T4': 'T4', 'T5Plus': 'T5+' }[key] || key);
+// rooms : on ne garde que le premier élément (single-select déguisé)
+watch(selectedRoomCapacity, (val) => {
+  // Si plusieurs valeurs sont cochées d'un coup, ne garder que la dernière
+  if (val.length > 1) {
+    selectedRoomCapacity.value = [val[val.length - 1]];
+    return; // le watcher se redéclenche avec la valeur unique
+  }
+  filterStore.updateFilters({ rooms: val[0] ? Number(val[0]) : 0 });
+  emit('search');
+}, { deep: true });
+
+// energyClass : single-select déguisé
+watch(selectedEnergyClass, (val) => {
+  if (val.length > 1) {
+    selectedEnergyClass.value = [val[val.length - 1]];
+    return;
+  }
+  filterStore.updateFilters({ energyClass: val[0] || '' });
+  emit('search');
+}, { deep: true });
+
+// condition : single-select déguisé
+watch(selectedPhysicalCondition, (val) => {
+  if (val.length > 1) {
+    selectedPhysicalCondition.value = [val[val.length - 1]];
+    return;
+  }
+  filterStore.updateFilters({ condition: val[0] || '' });
+  emit('search');
+}, { deep: true });
+
+// requiredCriteria : multi-select natif, appliqué directement
+watch(selectedCriteria, (val) => {
+  filterStore.updateFilters({ requiredCriteria: [...val] });
+  emit('search');
+}, { deep: true });
 </script>
 
 <style scoped>
-.search-container { padding: 0.5em; position: relative; z-index: 100; }
-.search-bar { display: flex; background: white; padding: 0.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 0 0 1px #e2e8f0; height: 70px; align-items: center; }
-.field { padding: 0 1rem; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: center; position: relative; min-width: 120px; cursor: pointer; height: 100%; }
-.value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: #1e2956; font-size: 0.9rem; }
-.truncated { max-width: 140px; }
-.popover { position: absolute; top: 80px; left: 0; background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 280px; max-height: 400px; z-index: 999; overflow-y: auto; cursor: default; }
-.checkbox-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; cursor: pointer; }
-.group-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 1rem; margin-bottom: 0.5rem; }
-.separator { height: 1px; background: #e2e8f0; margin: 0.5rem 0; }
-.search-btn { margin-left: auto; border-radius: 999px !important; height: 50px; padding: 0 2rem !important; background: #10b981 !important; z-index: 100; }
-.input-with-symbol { display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem; background: #f8fafc; }
-.slider-container { position: relative; height: 40px; margin-top: 1rem; }
-.slider-track { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; z-index: 1; }
-.slider-container input { position: absolute; width: 100%; background: none; appearance: none; top: 10px; z-index: 2; pointer-events: none; }
-input[type=range]::-webkit-slider-thumb { pointer-events: auto; appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #10b981; cursor: pointer; }
+.search-container {
+  display: flex;
+  justify-content: center;
+  padding: 1em;
+  width: 100%;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #1e2956;
+  padding: 1em;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 1100px;
+  gap: 1em;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  flex-wrap: wrap;
+}
+
+.search-btn {
+  margin-left: auto;
+  background-color: #10b981 !important;
+  padding: 0 2rem;
+  height: 50px;
+  border-radius: 12px;
+  font-weight: 600;
+  flex: 0;
+  white-space: nowrap;
+}
+
+.search-btn:hover {
+  background-color: #059969 !important;
+}
 </style>

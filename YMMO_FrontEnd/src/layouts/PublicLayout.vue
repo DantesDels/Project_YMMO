@@ -64,6 +64,7 @@ import AppButton from '@/components/ui/AppButton.vue';
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem 0;
   background: white;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.2);
 }
 
 .header-content {

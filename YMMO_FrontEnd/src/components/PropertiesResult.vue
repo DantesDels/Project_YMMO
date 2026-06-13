@@ -1,7 +1,26 @@
-﻿<template>
+﻿<!--
+  PropertiesResult.vue
+  ─────────────────────────────────────────────────────────────
+  Deux modes, contrôlés par la prop "mode" :
+
+  - mode="mock" (défaut) : filtre generateMockProperties() en
+    local selon filterStore.filters. Fonctionne hors-ligne,
+    utile pour la démo si le backend n'est pas joignable.
+
+  - mode="api" : affiche directement property.store.properties
+    (alimenté par property.store.search() via le parent).
+    Le tri reste géré ici, mais le filtrage est fait côté backend.
+
+  Le format affiché par PropertyCard diffère légèrement entre
+  les deux modes (mock = champs plats type "type/price/address",
+  api = PropertySummaryDto type "propertyType/currentPrice/city").
+  PropertyCard doit donc accepter les deux formes — voir le
+  composant normalizeProperty() ci-dessous qui uniformise.
+-->
+<template>
   <div class="results-container">
     <div class="results-header">
-      <h2>{{ filteredProperties.length }} logements disponibles</h2>
+      <h2>{{ displayedProperties.length }} logement{{ displayedProperties.length === 1 ? '' : 's' }} disponible{{ displayedProperties.length === 1 ? '' : 's' }}</h2>
       <select v-model="sortOrder" class="sort-select">
         <option value="default">Meilleurs résultats</option>
         <option value="asc">Prix croissant</option>
@@ -9,7 +28,11 @@
       </select>
     </div>
 
-    <div class="properties-grid">
+    <div v-if="isLoading" class="loading-state">
+      Recherche en cours...
+    </div>
+
+    <div v-else class="properties-grid">
       <PropertyCard
           v-for="prop in sortedProperties"
           :key="prop.id"
@@ -17,8 +40,8 @@
       />
     </div>
 
-    <div v-if="filteredProperties.length === 0" class="no-results">
-      Aucun bien trouvé pour ces critères (Prix max: {{ filterStore.filters.maxPrice }})
+    <div v-if="!isLoading && displayedProperties.length === 0" class="no-results">
+      Aucun bien trouvé pour ces critères.
     </div>
   </div>
 </template>
@@ -27,37 +50,88 @@
 import { ref, computed } from 'vue';
 import PropertyCard from './PropertyCard.vue';
 import { useFilterStore } from '@/stores/filterStore';
+import { generateMockProperties } from '@/utils/mockData';
 
-const filterStore = useFilterStore();
 const props = defineProps({
-  allProperties: { type: Array, default: () => [] }
+  // 'mock' : filtrage local sur des données générées
+  // 'api'  : utilise allProperties tel que fourni par le parent
+  //          (déjà filtré par le backend via property.store.search)
+  mode: { type: String, default: 'mock' },
+
+  // En mode 'api', le parent passe property.store.properties (PropertySummaryDto[])
+  // En mode 'mock', ignoré — les données sont générées localement
+  allProperties: { type: Array, default: () => [] },
+
+  isLoading: { type: Boolean, default: false },
+
+  // Nombre de biens mock à générer (uniquement mode 'mock')
+  mockCount: { type: Number, default: 40 },
 });
 
+const filterStore = useFilterStore();
 const sortOrder = ref('default');
 
-const filteredProperties = computed(() => {
+// ── Données mock générées une seule fois ────────────────────
+const mockProperties = generateMockProperties(props.mockCount);
+
+// ── Normalisation : uniformise mock + PropertySummaryDto ─────
+// PropertyCard ne reçoit toujours que ce format, peu importe la source
+function normalizeProperty(p) {
+  if (props.mode === 'api') {
+    // PropertySummaryDto → format unifié
+    return {
+      id: p.propertyId,
+      title: p.propertyName,
+      type: p.propertyType,
+      condition: p.condition,
+      price: p.currentPrice,
+      surface: p.surface,
+      address: `${p.city} (${p.postalCode})`,
+      mainFeatures: p.mainFeatures ?? [],
+      // Champs absents du summary backend → valeurs par défaut
+      image: `https://picsum.photos/seed/${p.propertyId}/400/300`,
+      availabilityDate: null,
+      rooms: null,
+      furnishing: null,
+      energyClass: null,
+    };
+  }
+  // Mock déjà au format unifié
+  return p;
+}
+
+// ── Filtrage (mode mock uniquement) ──────────────────────────
+const filteredMock = computed(() => {
   const f = filterStore.filters;
 
-  return props.allProperties.filter(p => {
-    // 1. Filtrage Ville : Vérifie si la ville saisie est contenue dans l'adresse
-    // .trim() et .toLowerCase() pour éviter les erreurs de saisie
-    const cityMatch = !f.city ||
-        f.city.trim() === '' ||
-        p.address.toLowerCase().includes(f.city.toLowerCase().trim());
+  return mockProperties.filter(p => {
+    const cityMatch = !f.city || p.address.toLowerCase().includes(f.city.toLowerCase());
+    const priceMatch = p.price >= f.minPrice && p.price <= f.maxPrice;
+    const surfaceMatch = p.surface >= f.minSurface && p.surface <= f.maxSurface;
+    const typeMatch = f.types.length === 0 || f.types.includes(p.type);
 
-    // 2. Filtrage Prix (avec sécurité)
-    const price = Number(p.price) || 0;
-    const priceMatch = price >= (f.minPrice || 0) && price <= (f.maxPrice || 5000000);
+    const conditionMatch = !f.condition || p.condition === f.condition;
+    const energyMatch = !f.energyClass || p.energyClass === f.energyClass;
+    const roomsMatch = !f.rooms || p.rooms >= f.rooms;
+    const furnishingMatch = !f.furnishing || p.furnishing === f.furnishing;
 
-    // 3. Filtrage Type
-    const typeMatch = f.types.length === 0 || f.types.includes(p.type || p.propertyType);
-    
-    return cityMatch && priceMatch && typeMatch;
+    const criteriaMatch = f.requiredCriteria.every(c => p.mainFeatures.includes(c));
+
+    return cityMatch && priceMatch && surfaceMatch && typeMatch &&
+        conditionMatch && energyMatch && roomsMatch &&
+        furnishingMatch && criteriaMatch;
   });
 });
 
+// ── Résultats affichés selon le mode ─────────────────────────
+const displayedProperties = computed(() => {
+  const raw = props.mode === 'api' ? props.allProperties : filteredMock.value;
+  return raw.map(normalizeProperty);
+});
+
+// ── Tri (commun aux deux modes) ──────────────────────────────
 const sortedProperties = computed(() => {
-  const list = [...filteredProperties.value];
+  const list = [...displayedProperties.value];
   if (sortOrder.value === 'asc') return list.sort((a, b) => a.price - b.price);
   if (sortOrder.value === 'desc') return list.sort((a, b) => b.price - a.price);
   return list;
@@ -74,4 +148,10 @@ const sortedProperties = computed(() => {
   width: 100%;
 }
 .sort-select { padding: 0.5rem; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; }
+.loading-state, .no-results {
+  text-align: center;
+  padding: 3rem 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
 </style>

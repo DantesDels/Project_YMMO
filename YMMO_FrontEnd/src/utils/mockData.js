@@ -1,15 +1,20 @@
-﻿const cities = ['Paris', 'Bordeaux', 'Lille', 'Lyon', 'Toulouse', 'Marseille', 'Nantes', 'Montpellier', 'Rennes', 'Grenoble'];
+﻿// ─────────────────────────────────────────────────────────────
+//  src/utils/mockData.js
+//  Données de démo pour le mode "mock" (sans backend).
+//  Les valeurs (type, condition, energyClass, mainFeatures)
+//  correspondent aux enums réels du backend C#.
+// ─────────────────────────────────────────────────────────────
+
+const cities = ['Paris', 'Bordeaux', 'Lille', 'Lyon', 'Toulouse', 'Marseille', 'Nantes', 'Montpellier', 'Rennes', 'Grenoble'];
 const propertyTypes = ['House', 'Apartment', 'Land', 'Commercial', 'Office', 'Garage', 'Parking'];
 const conditions = ['New', 'Excellent', 'Good', 'NeedsRefresh', 'NeedsRenovation', 'Ruin'];
 const energyClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Exempt'];
 const allCriteria = ['Studio', 'Balcony', 'Terrace', 'Garden', 'Garage', 'Parking', 'Cellar', 'SwimmingPool', 'Elevator', 'AirConditioning', 'FiberOptic', 'SmartHome'];
 
-// Fonction utilitaire pour tirer au sort
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// Fonction pour générer un sous-ensemble aléatoire de critères
 const getRandomCriteria = () => {
-    return allCriteria.filter(() => Math.random() > 0.7); // 30% de chance d'avoir un critère
+    return allCriteria.filter(() => Math.random() > 0.7);
 };
 
 export const generateMockProperties = (count) => {
@@ -27,6 +32,6 @@ export const generateMockProperties = (count) => {
         available: true,
         availabilityDate: 'août 2026',
         rooms: Math.floor(Math.random() * 6) + 1,
-        furnishing: Math.random() > 0.5 ? 'Meublé' : 'Non meublé'
+        furnishing: Math.random() > 0.5 ? 'Meublé' : 'Non meublé',
     }));
 };
