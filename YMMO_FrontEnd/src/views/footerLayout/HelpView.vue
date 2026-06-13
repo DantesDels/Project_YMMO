@@ -117,15 +117,17 @@ const schedule = computed(() => [
   margin-top: 4rem;
   background: #1e2956;
   color: white;
-  padding: 2.5rem;
+  padding: 1.75rem 2rem;
   border-radius: 20px;
   text-align: center;
 }
 .contact-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
 
 .schedule-title {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
   margin-bottom: 1rem;
 }
 
