@@ -59,6 +59,11 @@ const TYPE_LABELS = {
   Parking: 'Parking',
 };
 
+const ENERGY_LABELS = {
+  A: 'A', B: 'B', C: 'C', D: 'D', E: 'E', F: 'F', G: 'G',
+  Ex: 'Ex'
+};
+
 // Miroir complet de Domain/Entities/Enums/Criteria.cs (27 valeurs)
 const CRITERIA_LABELS = {
   Balcony: 'Balcon', Terrace: 'Terrasse', Garden: 'Jardin', Garage: 'Garage fermé',
@@ -84,6 +89,7 @@ const CONDITION_LABELS = {
 };
 
 const translateType = (key) => TYPE_LABELS[key] || key;
+const translateEnergy = (key) => ENERGY_LABELS[key] || key;
 const translateCriteria = (key) => CRITERIA_LABELS[key] || key;
 const translateCondition = (key) => CONDITION_LABELS[key] || key;
 

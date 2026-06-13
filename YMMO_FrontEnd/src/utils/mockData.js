@@ -1,5 +1,4 @@
 ﻿// ─────────────────────────────────────────────────────────────
-//  src/utils/mockData.js
 //  Données de démo pour le mode "mock" (sans backend).
 //  Les valeurs (type, condition, energyClass, mainFeatures)
 //  correspondent aux enums réels du backend C#.
@@ -8,7 +7,7 @@
 const cities = ['Paris', 'Bordeaux', 'Lille', 'Lyon', 'Toulouse', 'Marseille', 'Nantes', 'Montpellier', 'Rennes', 'Grenoble'];
 const propertyTypes = ['House', 'Apartment', 'Land', 'Commercial', 'Office', 'Garage', 'Parking'];
 const conditions = ['New', 'Excellent', 'Good', 'NeedsRefresh', 'NeedsRenovation', 'Ruin'];
-const energyClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Exempt'];
+const energyClasses = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Ex'];
 const allCriteria = ['Studio', 'Balcony', 'Terrace', 'Garden', 'Garage', 'Parking', 'Cellar', 'SwimmingPool', 'Elevator', 'AirConditioning', 'FiberOptic', 'SmartHome'];
 
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];

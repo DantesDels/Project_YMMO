@@ -16,8 +16,12 @@ import CityGrid from '@/components/CityGrid.vue';
 import PropertiesResult from '@/components/PropertiesResult.vue';
 import { generateMockProperties } from '@/utils/mockData';
 
-const mockProperties = ref([]);
-onMounted(() => {
-  mockProperties.value = generateMockProperties(40);
+const mockProperties = ref(null); // Initialise à null
+
+onMounted(async () => {
+  // Utilise un setTimeout pour laisser le DOM se peindre avant le calcul lourd
+  setTimeout(() => {
+    mockProperties.value = generateMockProperties(); // Nb de Résultats géré par PropertiesResult.vue
+  }, 0);
 });
 </script>

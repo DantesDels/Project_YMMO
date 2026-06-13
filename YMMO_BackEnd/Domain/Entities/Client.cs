@@ -17,7 +17,7 @@ public class Client : Contact
     public Criteria? Criteria { get; set; }
     
     // N:1 Relationship - A client is linked to one main agent
-    public Guid? AgentID { get; set; }
+    public Guid? AgentId { get; set; }
     public Agent? LinkedAgent { get; set; }
     
     // 1:N Relationships

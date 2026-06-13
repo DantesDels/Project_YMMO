@@ -65,7 +65,7 @@ const props = defineProps({
   isLoading: { type: Boolean, default: false },
 
   // Nombre de biens mock à générer (uniquement mode 'mock')
-  mockCount: { type: Number, default: 40 },
+  mockCount: { type: Number, default: 400 },
 });
 
 const filterStore = useFilterStore();
@@ -109,12 +109,10 @@ const filteredMock = computed(() => {
     const priceMatch = p.price >= f.minPrice && p.price <= f.maxPrice;
     const surfaceMatch = p.surface >= f.minSurface && p.surface <= f.maxSurface;
     const typeMatch = f.types.length === 0 || f.types.includes(p.type);
-
     const conditionMatch = !f.condition || p.condition === f.condition;
     const energyMatch = !f.energyClass || p.energyClass === f.energyClass;
     const roomsMatch = !f.rooms || p.rooms >= f.rooms;
     const furnishingMatch = !f.furnishing || p.furnishing === f.furnishing;
-
     const criteriaMatch = f.requiredCriteria.every(c => p.mainFeatures.includes(c));
 
     return cityMatch && priceMatch && surfaceMatch && typeMatch &&

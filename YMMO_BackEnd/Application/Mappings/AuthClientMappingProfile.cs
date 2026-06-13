@@ -16,7 +16,7 @@ public class AuthClientMappingProfile : Profile
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.Username))
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.Criteria, opt => opt.Ignore())
-            .ForMember(dest => dest.AgentID, opt => opt.Ignore())
+            .ForMember(dest => dest.AgentId, opt => opt.Ignore())
             .ForMember(dest => dest.LinkedAgent, opt => opt.Ignore())
             .ForMember(dest => dest.OwnedProperties, opt => opt.Ignore())
             .ForMember(dest => dest.BoughtProperties, opt => opt.Ignore())

@@ -73,7 +73,7 @@ public class AuthentificationService : IAuthentificationService
         
         if (user is Agent agent)
         {
-            claims.Add(new Claim("AgencyId", agent.AgencyID.ToString()));
+            claims.Add(new Claim("AgencyId", agent.AgencyId.ToString()));
         }
 
         var token = new JwtSecurityToken(

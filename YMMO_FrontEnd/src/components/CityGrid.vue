@@ -10,6 +10,9 @@
             :src="getCityImageUrl(city)"
             :alt="city"
             class="city-img"
+            loading="lazy"
+            width="281"
+            height="128"
             @error="handleImageError"
         />
         <div class="city-overlay">
@@ -31,6 +34,15 @@ const handleImageError = (event) => {
 </script>
 
 <style scoped>
+.section-wrapper {
+  padding: 2rem 0;
+}
+
+.section-title {
+  margin-bottom: 2rem;
+  color: #1e2956;
+}
+
 .property-grid-cities {
   display: flex;
   flex-wrap: wrap;
@@ -85,6 +97,6 @@ const handleImageError = (event) => {
 .city-card:hover .city-name {
   background: rgba(30, 41, 86, 0.9);
   transform: scale(1.05);
-  box-shadow: 3px 4px 12px rgba(30, 41, 86, 1.2);
+  box-shadow: 3px 4px 12px rgba(30, 41, 86, 0.6);
 }
 </style>

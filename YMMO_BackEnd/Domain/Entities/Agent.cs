@@ -13,7 +13,7 @@ public class Agent : Contact
     private readonly List<Property> _properties = new();
     
     // N:1 Relationship - An agent works in a specific agency
-    public Guid AgencyID { get; set; }
+    public Guid AgencyId { get; set; }
     public Agency Agency { get; set; } = null!;
     
     // 1:N Relationships

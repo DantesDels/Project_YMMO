@@ -11,7 +11,7 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         // Client → Agent (N:1, optional)
         builder.HasOne(c => c.LinkedAgent)
             .WithMany(ag => ag.LinkedClients)
-            .HasForeignKey(c => c.AgentID)
+            .HasForeignKey(c => c.AgentId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
     }

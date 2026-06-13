@@ -1,5 +1,4 @@
 ﻿// ─────────────────────────────────────────────────────────────
-//  src/stores/filterStore.ts
 //  État des filtres de recherche, partagé entre SearchBar
 //  et PropertiesResult (mode mock ET mode API).
 // ─────────────────────────────────────────────────────────────

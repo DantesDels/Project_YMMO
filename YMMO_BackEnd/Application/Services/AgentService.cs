@@ -52,7 +52,7 @@ public class AgentService : IAgentService
 
         var newAgent = _mapper.Map<Agent>(dto);
         
-        newAgent.AgencyID = admin.AgencyID; 
+        newAgent.AgencyId = admin.AgencyId; 
         newAgent.SetRole(ContactRole.Agent); 
         newAgent.PasswordHash = _passwordHasher.Hash(dto.Password);
 

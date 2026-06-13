@@ -11,7 +11,7 @@ public class AgentConfiguration : IEntityTypeConfiguration<Agent>
         // Agent → Agency (N:1)
         builder.HasOne(ag => ag.Agency)
             .WithMany(a => a.Agents)
-            .HasForeignKey(ag => ag.AgencyID)
+            .HasForeignKey(ag => ag.AgencyId)
             .OnDelete(DeleteBehavior.Restrict);
         
         builder.Metadata.FindNavigation(nameof(Agent.Properties))

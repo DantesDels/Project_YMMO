@@ -1,9 +1,10 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthentificationStore } from '@/stores/authentification.store';
-import PublicLayout from '@/layouts/PublicLayout.vue'
-import HomeView from '@/views/HomeView.vue'
+﻿import HomeView from '@/views/HomeView.vue'
 import AuthentificationView from '@/views/authentification/Authentification.vue'
 import DashboardView from '@/views/DashboardView.vue'
+
+import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthentificationStore } from '@/stores/authentification.store';
+import PublicLayout from '@/layouts/PublicLayout.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -12,10 +13,9 @@ const router = createRouter({
             path: '/',
             component: PublicLayout,
             children: [
-                { path: '', name: 'home', component: HomeView },
-                { path: 'home', redirect: '/' },
-                { path: 'authentification', component: AuthentificationView },
-                { path: 'dashboard', name: 'dashboard', component: DashboardView },
+                { path: '', name: 'home', component: () => import('@/views/HomeView.vue') },
+                { path: 'authentification', name: 'authentification', component: () => import('@/views/authentification/Authentification.vue') },
+                { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
                 {
                     path: 'portfolio/new',
                     name: 'agent-property-create',

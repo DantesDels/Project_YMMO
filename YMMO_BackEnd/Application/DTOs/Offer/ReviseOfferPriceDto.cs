@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace YMMO.Backend.Application.DTOs.Offers;
+namespace YMMO.Backend.Application.DTOs.Offer;
 
 public class ReviseOfferPriceDto
 {

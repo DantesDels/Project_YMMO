@@ -9,5 +9,5 @@ public enum EnergyClass
     E,
     F,              // Passoire thermique
     G,              // Passoire thermique très énergivore
-    Exempt          // Non soumis au DPE (ex: Terrain nu, VEFA en cours)
+    Ex         // Non soumis au DPE (ex: Terrain nu, VEFA en cours)
 }
