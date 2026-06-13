@@ -231,6 +231,8 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
+import { useWishlistStore } from '@/stores/wishlist.store'
+import { generateMockProperties } from '@/utils/mockData'
 
 interface SellPhoto {
   url: string
@@ -248,7 +250,7 @@ interface Offer {
 }
 
 interface Favorite {
-  id: number
+  id: string
   title: string
   price: number
   city: string
@@ -410,12 +412,26 @@ async function submitSellRequest() {
   }
 }
 
-// ── Favorites (mock) ──
-const favorites = reactive<Favorite[]>([])
+// ── Favorites (real wishlist) ──
+const wishlistStore = useWishlistStore()
+const allMockProperties = generateMockProperties()
 
-function removeFavorite(id: number) {
-  const idx = favorites.findIndex(f => f.id === id)
-  if (idx !== -1) favorites.splice(idx, 1)
+const favorites = computed(() => {
+  const ids = wishlistStore.favorites
+  if (ids.length === 0) return []
+  return allMockProperties
+    .filter(p => ids.includes(p.id))
+    .map(p => ({
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      city: p.address ? p.address.replace(/\(.*\)/, '').trim() : '',
+      image: p.image || 'https://placehold.co/400x300/1e2956/ffffff?text=YMMO',
+    }))
+})
+
+function removeFavorite(id: string) {
+  wishlistStore.removeFavorite(id)
 }
 
 // ── Offers (mock) ──
@@ -444,16 +460,11 @@ function handleLogout() {
   router.push('/')
 }
 
-// ── Init mock data ──
+// ── Init mock offers ──
 onMounted(() => {
   offers.push(
     { id: 1, propertyTitle: 'Appartement 3 pièces - Paris 11e', status: 'pending', agentName: 'Sophie Martin', agency: 'Agence du Centre', proposedPrice: 325000, message: 'Bonjour, nous avons étudié votre demande et vous proposons une estimation à 325 000 €. Contactez-nous pour visiter.' },
     { id: 2, propertyTitle: 'Studio rénové - Lyon 3e', status: 'negotiation', agentName: 'Lucas Bernard', agency: 'ImmoLyon', proposedPrice: 142000, message: 'Nous sommes intéressés. Pouvons-nous fixer un rendez-vous cette semaine ?' },
-  )
-
-  favorites.push(
-    { id: 101, title: 'Appartement haussmannien', price: 489000, city: 'Paris', image: 'https://placehold.co/400x300/1e2956/ffffff?text=Paris' },
-    { id: 102, title: 'Villa avec piscine', price: 725000, city: 'Nice', image: 'https://placehold.co/400x300/1e2956/ffffff?text=Nice' },
   )
 })
 </script>
