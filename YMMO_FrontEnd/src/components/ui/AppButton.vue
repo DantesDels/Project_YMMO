@@ -1,9 +1,9 @@
 ﻿<template>
-<router-link v-if="to" :to="to" class="btn-primary">
+<router-link v-if="to" :to="to" :class="['btn', `btn-${variant}`]">
 <slot />
 </router-link>
 
-<button v-else class="btn-primary" type="button">
+<button v-else :class="['btn', `btn-${variant}`]" type="button">
 <slot />
 </button>
 </template>
@@ -11,29 +11,32 @@
 <script setup>
 defineProps({
   to: { type: [String, Object], default: null },
-variant: { type: String, default: 'primary' }
+  variant: { type: String, default: 'primary' }
 });
 </script>
 
 <style scoped>
- .btn-primary {
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
-   white-space: nowrap;
-   padding: 0.6rem 1.2rem;
-   background-color: #1e2956;
-   color: white;
-   border-radius: 8px;
-   font-weight: 600;
-   font-size: 18px;
-   text-decoration: none;
-   transition: all 0.3s ease;
-   min-width: fit-content;
-   border: none;
-   cursor: pointer;
-   box-shadow: 0 5px 7px rgba(0,0,0,0.2);
- }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  min-width: fit-content;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  padding: 0.6rem 1.2rem;
+  background-color: #1e2956;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 5px 7px rgba(0,0,0,0.2);
+}
 
 .btn-primary:hover {
   background-color: #3b4a8a;
@@ -45,6 +48,50 @@ variant: { type: String, default: 'primary' }
   background-color: #161d40;
   transform: translateY(1px) scale(0.98);
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: all 0.05s ease;
+}
+
+.btn-secondary {
+  padding: 0.6rem 1.2rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(1px) scale(0.98);
+  transition: all 0.05s ease;
+}
+
+.btn-ghost {
+  padding: 0.4rem 0;
+  background-color: transparent;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  background-color: transparent;
+  color: #1e2956;
+  transform: translateX(-2px);
+  box-shadow: none;
+}
+
+.btn-ghost:active {
+  background-color: transparent;
+  transform: translateX(-2px) scale(0.98);
+  box-shadow: none;
   transition: all 0.05s ease;
 }
 </style>

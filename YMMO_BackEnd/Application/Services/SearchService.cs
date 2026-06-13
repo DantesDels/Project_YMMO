@@ -39,6 +39,12 @@ public class SearchService : ISearchService
         if (criteria.MaxPrice.HasValue)
             query = query.Where(p => p.CurrentPrice <= criteria.MaxPrice.Value);
 
+        if (criteria.Conditions.Count != 0)
+            query = query.Where(p => criteria.Conditions.Contains(p.Condition));
+
+        if (criteria.EnergyClasses.Count != 0)
+            query = query.Where(p => criteria.EnergyClasses.Contains(p.EnergyClass));
+
         // Filter by features (PostgreSQL text[] containment)
         foreach (var feature in criteria.RequiredCriteria)
         {

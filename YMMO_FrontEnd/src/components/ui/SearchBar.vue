@@ -94,19 +94,10 @@ const budgetRange = computed({
 const city = ref(filterStore.filters.city);
 const selectedTypes = ref([...filterStore.filters.types]);
 
-// rooms est un number? singulier dans filterStore → on le wrappe
-// dans un tableau pour SearchDropdown, on ne garde que le 1er élément
-const selectedRoomCapacity = ref(
-    filterStore.filters.rooms ? [String(filterStore.filters.rooms)] : []
-);
-
-// condition / energyClass sont des string singuliers → idem
-const selectedEnergyClass = ref(
-    filterStore.filters.energyClass ? [filterStore.filters.energyClass] : []
-);
-const selectedPhysicalCondition = ref(
-    filterStore.filters.condition ? [filterStore.filters.condition] : []
-);
+// Multi-select : tableaux synchronisés directement
+const selectedRoomCapacity = ref([...filterStore.filters.rooms]);
+const selectedEnergyClass = ref([...filterStore.filters.energyClasses]);
+const selectedPhysicalCondition = ref([...filterStore.filters.conditions]);
 
 // requiredCriteria est déjà un tableau → multi-select natif
 const selectedCriteria = ref([...filterStore.filters.requiredCriteria]);
@@ -268,34 +259,19 @@ watch(selectedTypes, (val) => {
   emit('search');
 }, { deep: true });
 
-// rooms : on ne garde que le premier élément (single-select déguisé)
+// Multi-select : synchronisation directe vers filterStore
 watch(selectedRoomCapacity, (val) => {
-  // Si plusieurs valeurs sont cochées d'un coup, ne garder que la dernière
-  if (val.length > 1) {
-    selectedRoomCapacity.value = [val[val.length - 1]];
-    return; // le watcher se redéclenche avec la valeur unique
-  }
-  filterStore.updateFilters({ rooms: val[0] ? Number(val[0]) : 0 });
+  filterStore.updateFilters({ rooms: [...val] });
   emit('search');
 }, { deep: true });
 
-// energyClass : single-select déguisé
 watch(selectedEnergyClass, (val) => {
-  if (val.length > 1) {
-    selectedEnergyClass.value = [val[val.length - 1]];
-    return;
-  }
-  filterStore.updateFilters({ energyClass: val[0] || '' });
+  filterStore.updateFilters({ energyClasses: [...val] });
   emit('search');
 }, { deep: true });
 
-// condition : single-select déguisé
 watch(selectedPhysicalCondition, (val) => {
-  if (val.length > 1) {
-    selectedPhysicalCondition.value = [val[val.length - 1]];
-    return;
-  }
-  filterStore.updateFilters({ condition: val[0] || '' });
+  filterStore.updateFilters({ conditions: [...val] });
   emit('search');
 }, { deep: true });
 

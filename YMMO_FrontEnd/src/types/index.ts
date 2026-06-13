@@ -191,12 +191,13 @@ export interface PropertySearchCriteriaDto {
   city             ?: string
   region           ?: string
   type             ?: PropertyType
-  minRooms         ?: number
   minPrice         ?: number
   maxPrice         ?: number
   minSurface       ?: number
   maxSurface       ?: number
-  condition        ?: PhysicalCondition
+  conditions       ?: PhysicalCondition[]
+  energyClasses    ?: EnergyClass[]
+  rooms            ?: number[]
   requiredCriteria ?: Criteria[]
   pageNumber        : number
   pageSize          : number

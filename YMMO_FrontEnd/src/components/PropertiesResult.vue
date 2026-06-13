@@ -109,9 +109,9 @@ const filteredMock = computed(() => {
     const priceMatch = p.price >= f.minPrice && p.price <= f.maxPrice;
     const surfaceMatch = p.surface >= f.minSurface && p.surface <= f.maxSurface;
     const typeMatch = f.types.length === 0 || f.types.includes(p.type);
-    const conditionMatch = !f.condition || p.condition === f.condition;
-    const energyMatch = !f.energyClass || p.energyClass === f.energyClass;
-    const roomsMatch = !f.rooms || p.rooms >= f.rooms;
+    const conditionMatch = f.conditions.length === 0 || f.conditions.includes(p.condition);
+    const energyMatch = f.energyClasses.length === 0 || f.energyClasses.includes(p.energyClass);
+    const roomsMatch = f.rooms.length === 0 || f.rooms.some(r => p.rooms >= Number(r));
     const furnishingMatch = !f.furnishing || p.furnishing === f.furnishing;
     const criteriaMatch = f.requiredCriteria.every(c => p.mainFeatures.includes(c));
 

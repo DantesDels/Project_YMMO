@@ -15,9 +15,9 @@ export interface FilterState {
     minSurface: number
     maxSurface: number
     requiredCriteria: string[] // Criteria[]
-    condition?: string         // PhysicalCondition
-    energyClass?: string
-    rooms?: number
+    conditions: string[]       // PhysicalCondition[] — multi-select
+    energyClasses: string[]    // EnergyClass[] — multi-select
+    rooms: string[]            // number[] en string — multi-select
     furnishing?: string
 }
 
@@ -29,9 +29,9 @@ const DEFAULT_FILTERS: FilterState = {
     minSurface: 0,
     maxSurface: 500,
     requiredCriteria: [],
-    condition: '',
-    energyClass: '',
-    rooms: 0,
+    conditions: [],
+    energyClasses: [],
+    rooms: [],
     furnishing: '',
 }
 
@@ -59,7 +59,9 @@ export const useFilterStore = defineStore('filter', () => {
             maxPrice         : f.maxPrice < DEFAULT_FILTERS.maxPrice ? f.maxPrice : undefined,
             minSurface       : f.minSurface > 0 ? f.minSurface : undefined,
             maxSurface       : f.maxSurface < DEFAULT_FILTERS.maxSurface ? f.maxSurface : undefined,
-            condition        : (f.condition as PhysicalCondition) || undefined,
+            conditions       : f.conditions.length ? (f.conditions as PhysicalCondition[]) : undefined,
+            energyClasses    : f.energyClasses.length ? (f.energyClasses as EnergyClass[]) : undefined,
+            rooms            : f.rooms.length ? f.rooms.map(r => Number(r)) : undefined,
             requiredCriteria : f.requiredCriteria.length ? (f.requiredCriteria as Criteria[]) : undefined,
             pageNumber       : 1,
             pageSize         : 50,

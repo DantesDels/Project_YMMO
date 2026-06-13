@@ -16,7 +16,8 @@ public class PropertySearchCriteriaDto
     public decimal? MinSurface { get; set; }
     public decimal? MaxSurface { get; set; }
     
-    public PhysicalCondition? Condition { get; set; } 
+    public List<PhysicalCondition> Conditions { get; set; } = new();
+    public List<EnergyClass> EnergyClasses { get; set; } = new();
     
     public List<Criteria> RequiredCriteria { get; set; } = new();
 
