@@ -91,7 +91,7 @@ public class AgentService : IAgentService
 
     public async Task<IEnumerable<PropertySummaryDto>> GetAgentPropertiesAsync(Guid agentId)
     {
-        var properties = await _propertyRepository.GetByIdAsync(agentId);
+        var properties = await _propertyRepository.GetPropertiesByAgentAsync(agentId);
         return _mapper.Map<IEnumerable<PropertySummaryDto>>(properties);
     }
     

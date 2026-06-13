@@ -24,6 +24,13 @@ public class PropertyRepository : BaseRepository<Property>, IPropertyRepository
             .ToListAsync();
     }
     
+    public async Task<IEnumerable<Property>> GetPropertiesByAgentAsync(Guid agentId)
+    {
+        return await _dbSet
+            .Where(property => property.AgentId == agentId)
+            .ToListAsync();
+    }
+
     public async Task AddPictureToPropertyAsync(Guid propertyId, PropertyPicture picture)
     {
         var property = await _context.Properties
