@@ -8,8 +8,19 @@
         </router-link>
 
         <nav class="nav-links">
-          <AppButton to="/louer">Louer</AppButton>
-          <AppButton to="/authentification">Se connecter</AppButton>
+          <AppButton to="/catalog">Catalogue</AppButton>
+          <AppButton to="/informations">À propos</AppButton>
+          
+          <span>|</span>
+          
+          <template v-if="isAuthenticated">
+            <AppButton :to="profileRoute">Profil</AppButton>
+            <AppButton @click="authStore.logout">Déconnexion</AppButton>
+          </template>
+
+          <template v-else>
+            <AppButton to="/authentification">Connexion</AppButton>
+          </template>
         </nav>
       </div>
     </header>
@@ -21,10 +32,10 @@
     <footer class="footer">
       <div class="container">
         <div class="footer-section">
-          <router-link to="/aide">Aide</router-link>
+          <router-link to="/help">Aide</router-link>
           <router-link to="/cgu">CGU</router-link>
-          <router-link to="/mentions-legales">Mentions légales</router-link>
-          <router-link to="/confidentialite">Politique de confidentialité</router-link>
+          <router-link to="/legal-mentions">Mentions légales</router-link>
+          <router-link to="/confidentiality">Politique de confidentialité</router-link>
         </div>
       </div>
     </footer>
@@ -32,7 +43,22 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useAuthentificationStore } from '@/stores/authentification.store';
 import AppButton from '@/components/ui/AppButton.vue';
+
+const authStore = useAuthentificationStore();
+
+// Vérifie si le token existe et si l'utilisateur est chargé
+const isAuthenticated = computed(() => !!authStore.token);
+
+// Optionnel : si tu veux rediriger vers des pages différentes selon le rôle
+const profileRoute = computed(() => {
+  const role = authStore.user?.role;
+  if (role === 'Agent') return '/dashboard'; // ou /agent/profile
+  if (role === 'Admin') return '/admin';
+  return '/profile'; // Client
+});
 </script>
 
 

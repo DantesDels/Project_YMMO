@@ -322,7 +322,7 @@ watch(selectedCriteria, (val) => {
   padding: 1em;
   border-radius: 16px;
   width: 100%;
-  max-width: 1500px;
+  max-width: 1700px;
   gap: 1em;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   flex-wrap: wrap;
