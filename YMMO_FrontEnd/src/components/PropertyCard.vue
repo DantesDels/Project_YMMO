@@ -8,10 +8,12 @@
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>
-        <div class="badges">
+        <div class="badges-top">
           <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
           <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
-          <span v-if="property.energyClass" class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
+        </div>
+        <div v-if="property.energyClass" class="badges-bottom">
+          <span class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
             {{ property.energyClass }}
           </span>
         </div>
@@ -155,7 +157,7 @@ const displayCriteria = computed(() => {
   fill: #ef4444;
 }
 
-.badges {
+.badges-top {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
@@ -163,7 +165,17 @@ const displayCriteria = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  pointer-events: none;
 }
+
+.badges-bottom {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  z-index: 2;
+}
+
 .badge.promo {
   background: #ef4444;
   color: white;
@@ -194,7 +206,6 @@ const displayCriteria = computed(() => {
   font-weight: 800;
   color: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  margin-left: auto;
 }
 .energy-a { background: #16a34a; }
 .energy-b { background: #4ade80; color: #1e2956; }
