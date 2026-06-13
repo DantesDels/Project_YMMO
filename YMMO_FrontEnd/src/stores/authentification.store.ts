@@ -12,6 +12,26 @@ import type {
 // Token JWT mock pour le mode démo Google
 const MOCK_GOOGLE_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJDbGllbnQiLCJ1c2VybmFtZSI6Ikdvb2dsZVVzZXIiLCJuYW1laWQiOiIxMjM0NTY3ODkwMTIzNDU2Nzg5MCIsImV4cCI6MTg5MzQ1NjAwMH0.rK0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0K0';
 
+const PROFILE_STORAGE_KEY = 'ymmo_profile'
+
+function saveProfileToStorage(data: Partial<AuthentificationUser>) {
+  const payload: Record<string, any> = {}
+  const keys: (keyof AuthentificationUser)[] = ['firstName', 'lastName', 'email', 'phone', 'address', 'zipCode', 'city', 'bio']
+  for (const key of keys) {
+    if (data[key] !== undefined) payload[key] = data[key]
+  }
+  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(payload))
+}
+
+function loadProfileFromStorage(): Record<string, any> | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 export const useAuthentificationStore = defineStore('authentification', {
   state: () => ({
     user: null as AuthentificationUser | null,
@@ -20,6 +40,25 @@ export const useAuthentificationStore = defineStore('authentification', {
   }),
 
   actions: {
+    restoreSession() {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      try {
+        const decoded = jwtDecode<JwtPayload>(token)
+        const username = decoded.username || 'User'
+        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Client'
+        const nameid = decoded.nameid || ''
+        this.user = {
+          token,
+          username,
+          contactId: nameid,
+          role,
+          ...loadProfileFromStorage(),
+        }
+      } catch {
+        localStorage.removeItem('token')
+      }
+    },
     async login(credentials: LoginRequest) {
       this.isLoading = true;
       this.error = null;
@@ -39,7 +78,8 @@ export const useAuthentificationStore = defineStore('authentification', {
           token: data.token,
           username: data.username,
           contactId: data.contactID,
-          role: role
+          role: role,
+          ...loadProfileFromStorage(),
         };
       } catch (err: any) {
         this.error = "Erreur de connexion : vérifiez vos identifiants.";
@@ -70,7 +110,7 @@ export const useAuthentificationStore = defineStore('authentification', {
           localStorage.setItem('token', data.token);
           const decoded = jwtDecode<JwtPayload>(data.token);
           const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-          this.user = { token: data.token, username: data.username, contactId: data.contactID, role };
+          this.user = { token: data.token, username: data.username, contactId: data.contactID, role, ...loadProfileFromStorage() };
           return;
         }
 
@@ -84,6 +124,7 @@ export const useAuthentificationStore = defineStore('authentification', {
           username: 'GoogleUser',
           contactId: '12345678901234567890',
           role,
+          ...loadProfileFromStorage(),
         };
       } catch (err: any) {
         this.error = "Erreur lors de la connexion avec Google.";
@@ -95,6 +136,7 @@ export const useAuthentificationStore = defineStore('authentification', {
     updateProfile(data: Partial<AuthentificationUser>) {
       if (!this.user) return
       this.user = { ...this.user, ...data }
+      saveProfileToStorage(data)
     },
 
     logout() {
