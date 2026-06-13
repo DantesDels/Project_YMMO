@@ -32,7 +32,14 @@
         <div class="info-section">
           <div class="info-header">
             <h1>{{ property.title }}</h1>
-            <span class="price">{{ formatPrice(property.price) }}</span>
+            <div class="price-row">
+              <span class="price">{{ formatPrice(property.price) }}</span>
+              <button class="fav-btn-detail" :class="{ active: isFav }" @click="toggleFav" :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="meta-tags">
@@ -154,12 +161,20 @@ import { ref, computed, onMounted } from 'vue'
 import { getMockAgentById } from '@/utils/mockData'
 import { useRoute } from 'vue-router'
 import { getMockPropertyById } from '@/utils/mockData'
+import { useWishlistStore } from '@/stores/wishlist.store'
 
 const route = useRoute()
+const wishlist = useWishlistStore()
 const property = ref(null)
 const loading = ref(true)
 const activeImage = ref(0)
 const showContactPopup = ref(false)
+
+const isFav = computed(() => property.value ? wishlist.isFavorite(property.value.id) : false)
+
+function toggleFav() {
+  if (property.value) wishlist.toggleFavorite(property.value.id)
+}
 
 const agent = computed(() => {
   if (!property.value?.agentId) return null
@@ -380,10 +395,47 @@ onMounted(() => {
   margin: 0 0 0.25rem;
 }
 
+.price-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .price {
   font-size: 1.5rem;
   font-weight: 800;
   color: #10b981;
+}
+
+.fav-btn-detail {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.fav-btn-detail:hover {
+  border-color: #fca5a5;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.fav-btn-detail.active {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.fav-btn-detail.active svg {
+  fill: #ef4444;
 }
 
 .meta-tags {

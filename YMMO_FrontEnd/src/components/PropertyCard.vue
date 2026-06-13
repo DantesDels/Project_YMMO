@@ -3,6 +3,11 @@
     <div class="property-card">
       <div class="image-container">
         <img :src="property.image || 'https://via.placeholder.com/300'" :alt="property.title" loading="lazy" />
+        <button class="fav-btn" :class="{ active: isFav }" @click.stop="toggleFav" :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
         <div class="badges">
           <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
           <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
@@ -45,10 +50,18 @@
 <script setup>
 import { computed } from 'vue';
 import { formatNumber } from '@/utils/formatters';
+import { useWishlistStore } from '@/stores/wishlist.store';
 
 const props = defineProps({
   property: { type: Object, required: true }
 });
+
+const wishlist = useWishlistStore()
+const isFav = computed(() => wishlist.isFavorite(props.property.id))
+
+function toggleFav() {
+  wishlist.toggleFavorite(props.property.id)
+}
 
 // Miroir de Domain/Enums/PropertyType.cs
 const TYPE_LABELS = {
@@ -107,6 +120,40 @@ const displayCriteria = computed(() => {
 
 .image-container { height: 200px; position: relative; }
 .image-container img { width: 100%; height: 100%; object-fit: cover; }
+
+.fav-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #94a3b8;
+  backdrop-filter: blur(4px);
+}
+
+.fav-btn:hover {
+  background: white;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.fav-btn.active {
+  color: #ef4444;
+  background: white;
+}
+
+.fav-btn.active svg {
+  fill: #ef4444;
+}
 
 .badges {
   position: absolute;
