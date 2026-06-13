@@ -80,11 +80,19 @@ export interface JwtPayload {
 }
 
 // État auth côté store
-export interface AuthUser {
+export interface AuthentificationUser {
   token     : string
   username  : string
   contactId : string
   role      : string   // 'Client' | 'Agent' | 'Manager' | 'Admin'
+  firstName?: string
+  lastName? : string
+  email?    : string
+  phone?    : string
+  address?  : string
+  zipCode?  : string
+  city?     : string
+  bio?      : string
 }
 
 // ── Location ─────────────────────────────────────────────────

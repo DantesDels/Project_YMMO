@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import AuthentificationForm from '@/components/AuthentificationForm.vue'
@@ -166,6 +166,13 @@ const router = useRouter()
 const authStore = useAuthentificationStore()
 const activeTab = ref<'login' | 'register'>('login')
 
+const redirectPath = computed(() => {
+  const role = authStore.user?.role
+  if (role === 'Agent') return '/agent/dashboard'
+  if (role === 'Admin') return '/dashboard'
+  return '/client/dashboard'
+})
+
 async function handleLogin(form: Record<string, any>) {
   const credentials: LoginRequest = {
     email: form.email,
@@ -173,14 +180,14 @@ async function handleLogin(form: Record<string, any>) {
   }
   await authStore.login(credentials)
   if (!authStore.error && authStore.user) {
-    router.push(authStore.user.role === 'Agent' ? '/agent/dashboard' : '/dashboard')
+    router.push(redirectPath.value)
   }
 }
 
 async function handleGoogleLogin() {
   await authStore.googleLogin()
   if (!authStore.error && authStore.user) {
-    router.push(authStore.user.role === 'Agent' ? '/agent/dashboard' : '/dashboard')
+    router.push(redirectPath.value)
   }
 }
 

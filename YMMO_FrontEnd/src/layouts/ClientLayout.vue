@@ -1,32 +1,26 @@
-﻿<template>
+<template>
   <div class="layout-wrapper">
     <header class="header">
       <div class="container header-content">
-        <router-link to="/" class="logo-link">
+        <router-link to="/client/dashboard" class="logo-link">
           <img src="/favicon.svg" alt="Logo YMMO" class="favicon" />
           <span class="logo-text">YMMO</span>
         </router-link>
 
         <nav class="nav-links">
+          <AppButton to="/client/favorites">Favoris</AppButton>
           <AppButton to="/catalog">Catalogue</AppButton>
           <AppButton to="/informations">À propos</AppButton>
 
           <span class="nav-sep">|</span>
 
-          <template v-if="isAuthenticated">
-            <div class="user-tag" @click="goToDashboard">
-              <span class="user-avatar">{{ avatarLetter }}</span>
-              <span class="user-name">{{ username }}</span>
-              <svg class="chevron-down" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
-            <button class="btn-logout" @click="handleLogout">Déconnexion</button>
-          </template>
-
-          <template v-else>
-            <AppButton to="/authentification">Connexion</AppButton>
-          </template>
+          <div class="user-tag" @click="goToDashboard">
+            <span class="user-avatar">{{ avatarLetter }}</span>
+            <span class="user-name">{{ username }}</span>
+            <svg class="chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </nav>
       </div>
     </header>
@@ -57,28 +51,13 @@ import AppButton from '@/components/ui/AppButton.vue'
 const router = useRouter()
 const authStore = useAuthentificationStore()
 
-const isAuthenticated = computed(() => !!localStorage.getItem('token'))
-
 const username = computed(() => authStore.user?.username ?? 'User')
 const avatarLetter = computed(() => username.value.charAt(0).toUpperCase())
 
 function goToDashboard() {
-  const role = authStore.user?.role
-  if (role === 'Agent') {
-    router.push('/agent/dashboard')
-  } else if (role === 'Admin') {
-    router.push('/dashboard')
-  } else {
-    router.push('/client/dashboard')
-  }
-}
-
-function handleLogout() {
-  authStore.logout()
-  router.push('/')
+  router.push('/client/dashboard')
 }
 </script>
-
 
 <style scoped>
 @keyframes pulse-effect {
@@ -103,7 +82,6 @@ function handleLogout() {
   box-sizing: border-box;
 }
 
-/* Header */
 .header {
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem 0;
@@ -160,8 +138,8 @@ function handleLogout() {
 .user-tag {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.4rem 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 999px;
   cursor: pointer;
@@ -175,20 +153,20 @@ function handleLogout() {
 }
 
 .user-avatar {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: #1e2956;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .user-name {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #1e2956;
 }
@@ -197,25 +175,6 @@ function handleLogout() {
   color: #94a3b8;
 }
 
-.btn-logout {
-  background: none;
-  border: 1px solid #e2e8f0;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-logout:hover {
-  background: #fef2f2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-/* Footer */
 .footer {
   margin-top: auto;
   background: #f9fafb;

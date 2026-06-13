@@ -1,6 +1,7 @@
 ﻿import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import PublicLayout from '@/layouts/PublicLayout.vue'
+import ClientLayout from '@/layouts/ClientLayout.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -53,20 +54,6 @@ const router = createRouter({
                     meta: { requiresAuthentification: true },
                 },
 
-                // ── Client ──
-                {
-                    path: 'client/dashboard',
-                    name: 'client-dashboard',
-                    component: () => import('@/views/ClientDashboardView.vue'),
-                    meta: { requiresAuthentification: true, requiredRole: 'Client' },
-                },
-                {
-                    path: 'client/sell',
-                    name: 'client-sell',
-                    component: () => import('@/views/ClientSellPropertyView.vue'),
-                    meta: { requiresAuthentification: true, requiredRole: 'Client' },
-                },
-
                 // ── Agent ──
                 {
                     path: 'agent/dashboard',
@@ -86,6 +73,34 @@ const router = createRouter({
                     path: ':pathMatch(.*)*',
                     name: 'not-found',
                     component: () => import('@/views/NotFoundView.vue'),
+                },
+            ],
+        },
+
+        // ── Client layout (authenticated clients) ──
+        {
+            path: '/client',
+            component: ClientLayout,
+            meta: { requiresAuthentification: true, requiredRole: 'Client' },
+            children: [
+                {
+                    path: '',
+                    redirect: { name: 'client-dashboard' },
+                },
+                {
+                    path: 'dashboard',
+                    name: 'client-dashboard',
+                    component: () => import('@/views/ClientDashboardView.vue'),
+                },
+                {
+                    path: 'sell',
+                    name: 'client-sell',
+                    component: () => import('@/views/ClientSellPropertyView.vue'),
+                },
+                {
+                    path: 'favorites',
+                    name: 'client-favorites',
+                    component: () => import('@/views/ClientDashboardView.vue'),
                 },
             ],
         },

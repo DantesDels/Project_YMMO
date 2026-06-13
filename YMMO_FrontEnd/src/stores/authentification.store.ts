@@ -92,10 +92,14 @@ export const useAuthentificationStore = defineStore('authentification', {
       }
     },
 
+    updateProfile(data: Partial<AuthentificationUser>) {
+      if (!this.user) return
+      this.user = { ...this.user, ...data }
+    },
+
     logout() {
       this.user = null;
       localStorage.removeItem('token');
-      // Optionnel : redirect vers login
       window.location.href = '/login';
     }
   }
