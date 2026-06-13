@@ -4,24 +4,23 @@
     <CityGrid />
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-      <PropertiesResult :allProperties="mockProperties" />
+      <PropertiesResult />
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { watch } from 'vue';
+import { useRoute } from 'vue-router';
 import HeroSection from '@/components/HeroSection.vue';
 import CityGrid from '@/components/CityGrid.vue';
 import PropertiesResult from '@/components/PropertiesResult.vue';
-import { generateMockProperties } from '@/utils/mockData';
+import { useFilterStore } from '@/stores/filterStore';
 
-const mockProperties = ref(null); // Initialise à null
+const route = useRoute();
+const filterStore = useFilterStore();
 
-onMounted(async () => {
-  // Utilise un setTimeout pour laisser le DOM se peindre avant le calcul lourd
-  setTimeout(() => {
-    mockProperties.value = generateMockProperties(); // Nb de Résultats géré par PropertiesResult.vue
-  }, 0);
-});
+watch(() => route.query.city, (city) => {
+  filterStore.updateFilters({ city: city || '' });
+}, { immediate: true });
 </script>

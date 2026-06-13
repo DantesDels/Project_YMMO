@@ -1,43 +1,45 @@
 ﻿<template>
-  <div class="property-card">
-    <div class="image-container">
-      <img :src="property.image || 'https://via.placeholder.com/300'" :alt="property.title" />
-      <div class="badges">
-        <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
-        <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
-        <span v-if="property.energyClass" class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
-          {{ property.energyClass }}
+  <router-link :to="`/property/${property.id}`" class="property-card-link">
+    <div class="property-card">
+      <div class="image-container">
+        <img :src="property.image || 'https://via.placeholder.com/300'" :alt="property.title" loading="lazy" />
+        <div class="badges">
+          <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
+          <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
+          <span v-if="property.energyClass" class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
+            {{ property.energyClass }}
+          </span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="title-row">
+          <h3 class="title">{{ property.title || 'Logement sans titre' }}</h3>
+          <span v-if="property.condition" class="condition-badge">{{ translateCondition(property.condition) }}</span>
+        </div>
+
+        <p class="location">{{ property.address || 'Adresse non spécifiée' }}</p>
+        <p class="specs">
+          {{ property.surface || 0 }}m²<span v-if="property.rooms"> · {{ property.rooms }} pièces</span><span v-if="property.furnishing"> · {{ property.furnishing }}</span>
+        </p>
+
+        <div v-if="displayCriteria.length > 0" class="criteria-list">
+          <span v-for="c in displayCriteria" :key="c" class="criteria-badge">
+            {{ translateCriteria(c) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="price">
+          <strong>{{ formatNumber(property.price || 0) }}€</strong>
         </span>
+        <div v-if="property.availabilityDate" class="availability">
+          ● Disponible {{ property.availabilityDate }}
+        </div>
       </div>
     </div>
-
-    <div class="content">
-      <div class="title-row">
-        <h3 class="title">{{ property.title || 'Logement sans titre' }}</h3>
-        <span v-if="property.condition" class="condition-badge">{{ translateCondition(property.condition) }}</span>
-      </div>
-
-      <p class="location">📍 {{ property.address || 'Adresse non spécifiée' }}</p>
-      <p class="specs">
-        {{ property.surface || 0 }}m²<span v-if="property.rooms"> - {{ property.rooms }} pièces</span><span v-if="property.furnishing"> - {{ property.furnishing }}</span>
-      </p>
-
-      <div v-if="displayCriteria.length > 0" class="criteria-list">
-        <span v-for="c in displayCriteria" :key="c" class="criteria-badge">
-          {{ translateCriteria(c) }}
-        </span>
-      </div>
-    </div>
-
-    <div class="footer">
-      <span class="price">
-        <strong>{{ formatNumber(property.price || 0) }}€</strong>
-      </span>
-      <div v-if="property.availabilityDate" class="availability">
-        ● Disponible {{ property.availabilityDate }}
-      </div>
-    </div>
-  </div>
+  </router-link>
 </template>
 
 <script setup>
@@ -99,8 +101,9 @@ const displayCriteria = computed(() => {
 </script>
 
 <style scoped>
+.property-card-link { text-decoration: none; color: inherit; display: block; }
 .property-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; transition: transform 0.2s; display: flex; flex-direction: column; }
-.property-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.property-card-link:hover .property-card { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 
 .image-container { height: 200px; position: relative; }
 .image-container img { width: 100%; height: 100%; object-fit: cover; }

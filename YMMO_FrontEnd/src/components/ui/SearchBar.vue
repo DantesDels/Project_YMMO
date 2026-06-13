@@ -56,11 +56,15 @@
           empty-label="Aucun"
       />
 
-
-      <AppButton class="search-btn" @click="onSearch">
-        Rechercher
-      </AppButton>
-
+      <div class="actions-group">
+        <button v-if="hasActiveFilters" class="clear-all-btn" type="button" @click="resetAllFilters" aria-label="Réinitialiser tous les filtres">
+          ×
+        </button>
+        <AppButton class="search-btn" @click="onSearch">
+          Rechercher
+        </AppButton>
+      </div>
+      
     </div>
   </div>
 </template>
@@ -231,6 +235,27 @@ const criteriaMap = {
   }
 };
 
+// ── Filtres actifs ? ────────────────────────────────────────────
+const hasActiveFilters = computed(() => {
+  const f = filterStore.filters
+  return !!f.city || f.types.length > 0 || f.conditions.length > 0 ||
+      f.energyClasses.length > 0 || f.rooms.length > 0 ||
+      f.requiredCriteria.length > 0 ||
+      f.minPrice !== 0 || f.maxPrice !== 1000000
+})
+
+const resetAllFilters = () => {
+  filterStore.resetFilters()
+  city.value = ''
+  selectedTypes.value = []
+  selectedRoomCapacity.value = []
+  selectedEnergyClass.value = []
+  selectedPhysicalCondition.value = []
+  selectedCriteria.value = []
+  pendingBudget.value = { min: 0, max: 1000000 }
+  emit('search')
+}
+
 // ── Soumission ─────────────────────────────────────────────────
 const onSearch = () => {
   filterStore.updateFilters({
@@ -242,16 +267,17 @@ const onSearch = () => {
 
 // ── Watchers : synchronisation vers filterStore ─────────────────
 
-// Recherche "live" sur la ville : debounce léger pour ne pas
-// spammer le filtre à chaque frappe
-let debounceTimer;
+// Synchronisation bidirectionnelle — temps réel
 watch(city, (val) => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    filterStore.updateFilters({ city: val });
-    emit('search');
-  }, 300);
+  if (val === filterStore.filters.city) return
+  filterStore.updateFilters({ city: val });
+  emit('search');
 });
+
+// ← filterStore → SearchBar (quand changé de l'extérieur, ex: CityGrid)
+watch(() => filterStore.filters.city, (val) => {
+  if (city.value !== val) city.value = val || ''
+}, { immediate: true })
 
 // Le changement de type est appliqué immédiatement (pas de debounce)
 watch(selectedTypes, (val) => {
@@ -304,8 +330,14 @@ watch(selectedCriteria, (val) => {
   flex-wrap: wrap;
 }
 
-.search-btn {
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-left: auto;
+}
+
+.search-btn {
   background-color: #10b981 !important;
   padding: 0 2rem;
   height: 50px;
@@ -317,6 +349,27 @@ watch(selectedCriteria, (val) => {
 
 .search-btn:hover {
   background-color: #059969 !important;
+}
+
+.clear-all-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.clear-all-btn:hover {
+  background: rgba(255,255,255,0.3);
 }
 
 /* ── Champ Budget — reprend le style .field.dropdown ─────────── */

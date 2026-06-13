@@ -5,7 +5,12 @@
     </h2>
 
     <div class="property-grid-cities">
-      <div v-for="city in cities" :key="city" class="city-card">
+      <div
+        v-for="city in cities"
+        :key="city"
+        class="city-card"
+        @click="goToCity(city)"
+      >
         <img
             :src="getCityImageUrl(city)"
             :alt="city"
@@ -24,13 +29,20 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { getCityImageUrl } from '../utils/imageLoader';
 
-const cities = ['Paris', 'Bordeaux', 'Lille', 'Lyon', 'Toulouse', 'Marseille', 'Nantes', 'Montpellier', 'Rennes', 'Grenoble'];
+const router = useRouter()
+
+const cities = ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Montpellier', 'Strasbourg', 'Bordeaux', 'Lille', 'Rennes', 'Reims', 'Le Havre', 'Saint-Étienne', 'Toulon']
 
 const handleImageError = (event) => {
-  event.target.src = '/images/ui/default-city.webp';
-};
+  event.target.src = '/images/ui/default-city.webp'
+}
+
+const goToCity = (city) => {
+  router.push({ name: 'catalog', query: { city } })
+}
 </script>
 
 <style scoped>
@@ -63,6 +75,13 @@ const handleImageError = (event) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.city-card:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 20px rgba(30,41,86,0.25);
 }
 
 .city-img {

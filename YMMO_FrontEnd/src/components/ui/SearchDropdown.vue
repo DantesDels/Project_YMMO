@@ -7,6 +7,7 @@
     <button class="dropdown-trigger" type="button" @click="toggle">
       <span class="label">{{ label }}</span>
       <span class="value">{{ displayValue }}</span>
+      <button v-if="modelValue.length" class="clear-btn" type="button" @click.stop="clear" aria-label="Effacer la sélection">×</button>
       <svg class="chevron" :class="{ open: isOpen }" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
       </svg>
@@ -124,6 +125,25 @@ const displayValue = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.clear-btn {
+  background: #e2e8f0;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.clear-btn:hover { background: #cbd5e1; color: #1e2956; }
 
 .chevron {
   width: 16px;

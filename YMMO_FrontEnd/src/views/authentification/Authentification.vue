@@ -236,7 +236,9 @@ async function handleRegister(form: Record<string, any>) {
   font-size: 0.875rem;
   font-weight: 600;
   color: #334155;
-  margin-bottom: 0.375rem;
+  text-align: left;
+  margin-bottom: 1px;
+  padding-top: 15px;
 }
 
 .input {
