@@ -51,8 +51,14 @@
         </template>
       </AuthentificationForm>
 
+      <div v-if="activeTab === 'login'" class="divider">
+        <span>ou</span>
+      </div>
+
+      <GoogleSignInButton v-if="activeTab === 'login'" :loading="authStore.isLoading" @click="handleGoogleLogin" />
+
       <AuthentificationForm
-        v-else
+        v-if="activeTab === 'register'"
         title="Créez votre compte"
         button-text="S'inscrire"
         :loading="authStore.isLoading"
@@ -137,6 +143,12 @@
         </template>
       </AuthentificationForm>
 
+      <div v-if="activeTab === 'register'" class="divider">
+        <span>ou</span>
+      </div>
+
+      <GoogleSignInButton v-if="activeTab === 'register'" :loading="authStore.isLoading" @click="handleGoogleLogin" />
+
       <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
     </div>
   </div>
@@ -147,6 +159,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import AuthentificationForm from '@/components/AuthentificationForm.vue'
+import GoogleSignInButton from '@/components/ui/GoogleSignInButton.vue'
 import type { LoginRequest, RegisterRequest } from '@/types'
 
 const router = useRouter()
@@ -159,6 +172,13 @@ async function handleLogin(form: Record<string, any>) {
     password: form.password,
   }
   await authStore.login(credentials)
+  if (!authStore.error && authStore.user) {
+    router.push(authStore.user.role === 'Agent' ? '/agent/dashboard' : '/dashboard')
+  }
+}
+
+async function handleGoogleLogin() {
+  await authStore.googleLogin()
   if (!authStore.error && authStore.user) {
     router.push(authStore.user.role === 'Agent' ? '/agent/dashboard' : '/dashboard')
   }
@@ -271,6 +291,29 @@ async function handleRegister(form: Record<string, any>) {
 
 .link:hover {
   color: #3b4a8a;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.divider span {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .error-msg {
