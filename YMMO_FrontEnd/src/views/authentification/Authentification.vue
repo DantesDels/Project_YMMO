@@ -136,6 +136,22 @@
               autocomplete="new-password"
             />
           </div>
+          <div>
+            <label class="label" for="reg-password-confirm">Confirmer le mot de passe</label>
+            <input
+              id="reg-password-confirm"
+              v-model="form.passwordConfirm"
+              type="password"
+              class="input"
+              :class="{ 'input-error': passwordError }"
+              placeholder="Retaper le mot de passe"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              @input="clearPasswordError"
+            />
+            <p v-if="passwordError" class="field-error">Les mots de passe ne correspondent pas.</p>
+          </div>
         </template>
         <template #footer>
           Déjà inscrit ?
@@ -165,6 +181,7 @@ import type { LoginRequest, RegisterRequest } from '@/types'
 const router = useRouter()
 const authStore = useAuthentificationStore()
 const activeTab = ref<'login' | 'register'>('login')
+const passwordError = ref(false)
 
 const redirectPath = computed(() => {
   const role = authStore.user?.role
@@ -191,7 +208,16 @@ async function handleGoogleLogin() {
   }
 }
 
+function clearPasswordError() {
+  passwordError.value = false
+}
+
 async function handleRegister(form: Record<string, any>) {
+  if (form.password !== form.passwordConfirm) {
+    passwordError.value = true
+    return
+  }
+  passwordError.value = false
   const details: RegisterRequest = {
     username: form.username,
     lastName: `${form.firstName} ${form.lastName}`,
@@ -321,6 +347,21 @@ async function handleRegister(form: Record<string, any>) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.input-error {
+  border-color: #dc2626 !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.field-error {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 500;
 }
 
 .error-msg {
