@@ -83,7 +83,7 @@ export const generateMockAgents = (count = 30) => {
     const first = getRandom(agentFirstNames);
     const last = getRandom(agentLastNames);
     return {
-      id: crypto.randomUUID(),
+      id: `agent-${i}`,
       name: `${first} ${last}`,
       email: `${first.toLowerCase()}.${last.toLowerCase()}@ymmo.fr`,
       phone: `0${6 + Math.floor(Math.random() * 4)} ${String(Math.floor(Math.random() * 100)).padStart(2, '0')} ${String(Math.floor(Math.random() * 100)).padStart(2, '0')} ${String(Math.floor(Math.random() * 100)).padStart(2, '0')} ${String(Math.floor(Math.random() * 100)).padStart(2, '0')}`,
@@ -120,7 +120,7 @@ export const generateMockProperties = (count = 400) => {
     const agent = agents[Math.floor(Math.random() * agents.length)];
 
     return {
-      id: crypto.randomUUID(),
+      id: `prop-${i}`,
       title: `${getRandom(propertyTypes)}`,
       type: getRandom(propertyTypes),
       condition: getRandom(conditions),

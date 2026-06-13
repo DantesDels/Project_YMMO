@@ -6,7 +6,9 @@ const STORAGE_KEY = 'ymmo_wishlist'
 function loadWishlist(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    if (!raw) return []
+    const ids: string[] = JSON.parse(raw)
+    return ids.filter(id => id.startsWith('prop-'))
   } catch {
     return []
   }
