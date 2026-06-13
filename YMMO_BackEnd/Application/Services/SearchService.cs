@@ -3,16 +3,15 @@ using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using YMMO.Backend.Application.DTOs.Property;
 using YMMO.Backend.Application.Interfaces;
-using YMMO.Backend.Infrastructure.Data;
 
 namespace YMMO.Backend.Application.Services;
 
 public class SearchService : ISearchService
 {
-    private readonly YmmoDbContext _context;
+    private readonly IYmmoDbContext _context;
     private readonly IMapper _mapper;
 
-    public SearchService(YmmoDbContext context, IMapper mapper)
+    public SearchService(IYmmoDbContext context, IMapper mapper)
     {
         _context = context;
         _mapper = mapper;
@@ -41,7 +40,7 @@ public class SearchService : ISearchService
             query = query.Where(p => p.CurrentPrice <= criteria.MaxPrice.Value);
 
         // Filter by features (PostgreSQL text[] containment)
-        foreach (var feature in criteria.RequiredFeatures)
+        foreach (var feature in criteria.RequiredCriteria)
         {
             query = query.Where(p => p.Features.Contains(feature));
         }

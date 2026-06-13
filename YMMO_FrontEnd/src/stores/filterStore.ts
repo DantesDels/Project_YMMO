@@ -60,7 +60,7 @@ export const useFilterStore = defineStore('filter', () => {
             minSurface       : f.minSurface > 0 ? f.minSurface : undefined,
             maxSurface       : f.maxSurface < DEFAULT_FILTERS.maxSurface ? f.maxSurface : undefined,
             condition        : (f.condition as PhysicalCondition) || undefined,
-            requiredFeatures : f.requiredCriteria.length ? (f.requiredCriteria as Criteria[]) : undefined,
+            requiredCriteria : f.requiredCriteria.length ? (f.requiredCriteria as Criteria[]) : undefined,
             pageNumber       : 1,
             pageSize         : 50,
         }

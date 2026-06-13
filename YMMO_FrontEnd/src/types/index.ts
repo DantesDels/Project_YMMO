@@ -51,6 +51,7 @@ export enum Criteria {
 // POST /api/authentification/register
 export interface RegisterRequest {
   username    : string
+  lastName    : string
   email       : string
   phoneNumber : string
   password    : string
@@ -196,7 +197,7 @@ export interface PropertySearchCriteriaDto {
   minSurface       ?: number
   maxSurface       ?: number
   condition        ?: PhysicalCondition
-  requiredFeatures ?: Criteria[]
+  requiredCriteria ?: Criteria[]
   pageNumber        : number
   pageSize          : number
 }

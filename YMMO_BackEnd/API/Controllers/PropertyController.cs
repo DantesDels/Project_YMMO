@@ -87,7 +87,7 @@ public class PropertyController : ControllerBase
     }
 
     [Authorize(Roles = "Agent,Manager,Admin")]
-    [HttpDelete("{id}/pictures/{pictureId}")]
+    [HttpDelete("{propertyId}/pictures/{pictureId}")]
     public async Task<IActionResult> DeletePicture(Guid propertyId, Guid pictureId)
     {
         await _propertyService.DeletePictureToPropertyAsync(propertyId, pictureId);

@@ -1,39 +1,21 @@
-﻿<template>
-<div id="app">
-<header>...</header>
+﻿.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
 
-<main class="page-container">
-<router-view />
-</main>
-
-<footer>...</footer>
-</div>
-</template>
-
-<style>
- .page-container {
-     max-width: 1200px;
-     margin: 0 auto;
-     padding: 0 1rem;
- }
-</style>
-
-/* Conteneur racine de l'application */
 .app-wrapper {
     @apply min-h-screen flex flex-col w-full;
 }
 
-/* Conteneur principal pour centrer le contenu des pages */
 .main-container {
     @apply max-w-7xl mx-auto px-6 py-12 w-full;
 }
 
-/* Section standardisée avec padding */
 .section-wrapper {
     @apply py-12 px-6;
 }
 
-/* Grille globale réutilisable pour des listes (ex: propriétés, cartes) */
 .property-grid {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
 }

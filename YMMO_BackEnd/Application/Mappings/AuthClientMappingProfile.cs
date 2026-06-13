@@ -23,7 +23,6 @@ public class AuthClientMappingProfile : Profile
             .ForMember(dest => dest.Offers, opt => opt.Ignore())
             .ForMember(dest => dest.WishlistItems, opt => opt.Ignore())
             .ForMember(dest => dest.ContactId, opt => opt.Ignore())
-            .ForMember(dest => dest.LastName, opt => opt.Ignore())
             .ForMember(dest => dest.ContactRole, opt => opt.Ignore())
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
     }

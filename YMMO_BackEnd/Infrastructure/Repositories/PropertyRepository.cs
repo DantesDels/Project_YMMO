@@ -77,7 +77,7 @@ public class PropertyRepository : BaseRepository<Property>, IPropertyRepository
         // Property Type Filter
         if (criteria.Type.HasValue)
         {
-            query = ((IQueryable<Property>)query).Where(property => property.PropertyType == criteria.Type.Value);
+            query = query.Where(property => property.PropertyType == criteria.Type.Value);
         }
         
         // Minimum Price Filter

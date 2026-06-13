@@ -119,7 +119,9 @@ try
     // 3. MIDDLEWARE PIPELINE
     // ──────────────────────────────────────────────────────────
     app.UseMiddleware<ErrorHandlingMiddleware>();
-    app.UseHttpsRedirection();
+
+    if (!app.Environment.IsDevelopment())
+        app.UseHttpsRedirection();
     
     app.UseRouting(); // Nécessaire avant UseCors
     app.UseCors("AllowFrontend");

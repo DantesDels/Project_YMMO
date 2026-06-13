@@ -9,7 +9,12 @@
 
         <nav class="nav-links">
           <AppButton to="/louer">Louer</AppButton>
-          <AppButton to="/authentification">Se connecter</AppButton>
+          <template v-if="authStore.user">
+            <AppButton v-if="authStore.user.role === 'Agent'" to="/agent/dashboard">Dashboard</AppButton>
+            <AppButton v-else to="/client/dashboard">Mon compte</AppButton>
+            <button class="btn-logout" @click="handleLogout">Déconnexion</button>
+          </template>
+          <AppButton v-else to="/authentification">Se connecter</AppButton>
         </nav>
       </div>
     </header>
@@ -31,8 +36,18 @@
   </div>
 </template>
 
-<script setup>
-import AppButton from '@/components/ui/AppButton.vue';
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useAuthentificationStore } from '@/stores/authentification.store'
+import AppButton from '@/components/ui/AppButton.vue'
+
+const router = useRouter()
+const authStore = useAuthentificationStore()
+
+function handleLogout() {
+  authStore.logout()
+  router.push('/')
+}
 </script>
 
 
@@ -106,6 +121,24 @@ import AppButton from '@/components/ui/AppButton.vue';
   display: flex;
   gap: 1.5rem;
   align-items: center;
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-logout:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
 }
 
 /* Footer */

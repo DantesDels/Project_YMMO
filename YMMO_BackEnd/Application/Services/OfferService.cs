@@ -59,7 +59,7 @@ public class OfferService : IOfferService
 
        if (offer == null) throw new KeyNotFoundException("Offre introuvable.");
        if (offer.StatusOffer != StatusOffer.Pending)
-          throw new InvalidOperationException("Le bien n'est plus disponible.");
+          throw new InvalidOperationException("Seules les offres en attente peuvent être révisées.");
        
        _mapper.Map(dto, offer);
        

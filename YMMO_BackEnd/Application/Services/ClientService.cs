@@ -40,7 +40,7 @@ public class ClientService : IClientService
     public async Task<ClientProfileDto> RegisterClientAsync(RegisterClientDto dto)
     {
         if (await _clientRepository.GetByEmailAsync(dto.Email) != null) 
-            throw new Exception("Cet email existe déjà.");
+            throw new ArgumentException("Cet email existe déjà.");
 
         var newClient = _mapper.Map<Client>(dto);
         newClient.CreatedAt = DateTime.UtcNow;

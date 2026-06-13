@@ -6,9 +6,6 @@ namespace YMMO.Backend.Domain.Entities;
 // 'abstract' because we only instantiate Client or Agent
 public abstract class Contact
 {
-    private string _passwordHash = string.Empty;
-    
-    
     public Guid ContactId { get; set; } =  Guid.NewGuid();
     
     [MaxLength(100)]
@@ -38,7 +35,7 @@ public abstract class Contact
     {
         if (string.IsNullOrWhiteSpace(newHashedPassword))
             throw new ArgumentException("Le hash ne peut pas être vide.");
-            
-        _passwordHash = newHashedPassword;
+
+        PasswordHash = newHashedPassword;
     }
 }

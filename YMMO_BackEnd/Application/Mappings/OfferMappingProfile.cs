@@ -22,6 +22,7 @@ public class OfferMappingProfile : Profile
         CreateMap<Offer, OfferResponseDto>()
             .ForMember(dest => dest.ClientLastName, opt => opt.MapFrom(src => src.Client.LastName))
             .ForMember(dest => dest.ClientFirstName, opt => opt.MapFrom(src => src.Client.FirstName))
+            .ForMember(dest => dest.ClientPhoneNumber, opt => opt.MapFrom(src => src.Client.PhoneNumber))
             .ForMember(dest => dest.PropertyCity, opt => opt.MapFrom(src => src.Property.Location.City))
             .ForMember(dest => dest.PropertyRegion, opt => opt.MapFrom(src => src.Property.Location.Region));
     }

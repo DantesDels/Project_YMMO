@@ -1,33 +1,47 @@
-﻿import HomeView from '@/views/HomeView.vue'
-import AuthentificationView from '@/views/authentification/Authentification.vue'
-import DashboardView from '@/views/DashboardView.vue'
-
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthentificationStore } from '@/stores/authentification.store';
-import PublicLayout from '@/layouts/PublicLayout.vue'
+﻿import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthentificationStore } from '@/stores/authentification.store'
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
             path: '/',
-            component: PublicLayout,
+            component: () => import('@/layouts/PublicLayout.vue'),
             children: [
                 { path: '', name: 'home', component: () => import('@/views/HomeView.vue') },
                 { path: 'authentification', name: 'authentification', component: () => import('@/views/authentification/Authentification.vue') },
                 { path: 'dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
+
+                // ── Client ──
+                {
+                    path: 'client/dashboard',
+                    name: 'client-dashboard',
+                    component: () => import('@/views/ClientDashboardView.vue'),
+                    meta: { requiresAuthentification: true, requiredRole: 'Client' },
+                },
+                {
+                    path: 'client/sell',
+                    name: 'client-sell',
+                    component: () => import('@/views/ClientSellPropertyView.vue'),
+                    meta: { requiresAuthentification: true, requiredRole: 'Client' },
+                },
+
+                // ── Agent ──
+                {
+                    path: 'agent/dashboard',
+                    name: 'agent-dashboard',
+                    component: () => import('@/views/agent/AgentDashboardView.vue'),
+                    meta: { requiresAuthentification: true, requiredRole: 'Agent' },
+                },
                 {
                     path: 'portfolio/new',
                     name: 'agent-property-create',
                     component: () => import('@/views/agent/PropertyFormView.vue'),
-                    meta: {
-                        requiresAuthentification: true,
-                        requiredRole: 'Agent'
-                    }
-                }
-            ]
-        }
-    ]
+                    meta: { requiresAuthentification: true, requiredRole: 'Agent' },
+                },
+            ],
+        },
+    ],
 })
 
 router.beforeEach((to, from, next) => {

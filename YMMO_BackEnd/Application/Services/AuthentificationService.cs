@@ -76,18 +76,19 @@ public class AuthentificationService : IAuthentificationService
             claims.Add(new Claim("AgencyId", agent.AgencyId.ToString()));
         }
 
+        var expiryHours = int.TryParse(_config["Jwt:ExpiryHours"], out var hours) ? hours : 2;
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims, 
-            expires: DateTime.UtcNow.AddHours(2),
+            expires: DateTime.UtcNow.AddHours(expiryHours),
             signingCredentials: credentials);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     public async Task<AuthentificationDto.AuthentificationResponse> LoginAsync(AuthentificationDto.LoginRequest request)
     {
-        var contact = await _clientRepository.GetByEmailAsync(request.Email);
+        var contact = await _contactRepository.GetByEmailAsync(request.Email);
         if (contact == null || !_passwordHasher.Verify(request.Password, contact.PasswordHash))
         {
             throw new UnauthorizedAccessException("Email ou mot de passe incorrect.");
@@ -107,23 +108,8 @@ public class AuthentificationService : IAuthentificationService
         var existing = await _clientRepository.GetByEmailAsync(request.Email);
         if (existing != null) throw new ArgumentException("Cet email est déjà utilisé.");
 
-        // ANCIENNE VERSION
-        /*
-        var newClient = new Client
-        {
-            CreatedAt = DateTime.UtcNow,
-            FirstName = request.Username,
-            LastName = "Utilisateur",
-            Email = request.Email,
-            PhoneNumber = request.PhoneNumber,
-            PasswordHash = hashedPassword,
-        };
-        */
-
-        // NOUVELLE VERSION
         var newClient = _mapper.Map<Client>(request);
         newClient.CreatedAt = DateTime.UtcNow;
-        newClient.LastName = "Utilisateur";
         newClient.PasswordHash = _passwordHasher.Hash(request.Password);
         
         await _clientRepository.AddAsync(newClient);
