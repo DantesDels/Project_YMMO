@@ -18,6 +18,9 @@ function saveWishlist(ids: string[]) {
 
 export const useWishlistStore = defineStore('wishlist', () => {
   const favoriteIds = ref<string[]>(loadWishlist())
+  const toastMessage = ref('')
+  const toastVisible = ref(false)
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
 
   const favorites = computed(() => favoriteIds.value)
   const count = computed(() => favoriteIds.value.length)
@@ -26,12 +29,24 @@ export const useWishlistStore = defineStore('wishlist', () => {
     return favoriteIds.value.includes(id)
   }
 
+  function showToast(msg: string) {
+    if (toastTimer) clearTimeout(toastTimer)
+    toastMessage.value = msg
+    toastVisible.value = true
+    toastTimer = setTimeout(() => {
+      toastVisible.value = false
+      toastTimer = null
+    }, 2000)
+  }
+
   function toggleFavorite(id: string) {
     const idx = favoriteIds.value.indexOf(id)
     if (idx === -1) {
       favoriteIds.value.push(id)
+      showToast('Ajouté aux favoris')
     } else {
       favoriteIds.value.splice(idx, 1)
+      showToast('Retiré des favoris')
     }
     saveWishlist(favoriteIds.value)
   }
@@ -49,5 +64,5 @@ export const useWishlistStore = defineStore('wishlist', () => {
     saveWishlist([])
   }
 
-  return { favorites, count, isFavorite, toggleFavorite, removeFavorite, clear }
+  return { favorites, count, isFavorite, toggleFavorite, removeFavorite, clear, toastMessage, toastVisible }
 })
