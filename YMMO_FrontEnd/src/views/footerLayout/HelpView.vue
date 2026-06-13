@@ -25,6 +25,7 @@
 
     <section class="contact-card">
       <h3>Vous ne trouvez pas de réponse ?</h3>
+      <p class="schedule-title">Horaires d'ouverture de nos agences</p>
       <div class="schedule">
         <div
           v-for="day in schedule"
@@ -121,6 +122,12 @@ const schedule = computed(() => [
   text-align: center;
 }
 .contact-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+
+.schedule-title {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1rem;
+}
 
 .schedule {
   display: flex;
