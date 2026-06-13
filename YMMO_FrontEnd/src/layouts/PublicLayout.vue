@@ -7,44 +7,70 @@
           <span class="logo-text">YMMO</span>
         </router-link>
 
-        <nav class="nav-links">
-          <router-link to="/client/favorites" class="nav-icon-link">
-            <span class="heart-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-              <span v-if="favCount > 0" class="fav-badge">{{ favCount }}</span>
-            </span>
-            <span class="nav-icon-label">Favoris</span>
-          </router-link>
+        <nav class="nav-links" aria-label="Navigation principale">
           <AppButton to="/catalog">Catalogue</AppButton>
           <AppButton to="/informations">À propos</AppButton>
 
-          <span class="nav-sep">|</span>
+          <span class="nav-sep" aria-hidden="true">|</span>
 
           <template v-if="isAuthenticated">
-            <div class="user-menu" @click.stop="toggleMenu" @keydown.escape="closeMenu" tabindex="0">
-              <div class="user-tag">
-                <span class="user-avatar">{{ avatarLetter }}</span>
+            <div
+              class="user-menu"
+              ref="menuRef"
+              role="button"
+              :aria-haspopup="true"
+              :aria-expanded="menuOpen"
+              :aria-label="`Menu utilisateur : ${username}`"
+              tabindex="0"
+              @click.stop="toggleMenu"
+              @keydown.enter.prevent="toggleMenu"
+              @keydown.space.prevent="toggleMenu"
+              @keydown.escape="closeMenu"
+            >
+              <div class="user-tag" :class="{ 'tag-open': menuOpen }">
+                <span class="user-avatar" aria-hidden="true">{{ avatarLetter }}</span>
                 <span class="user-name">{{ username }}</span>
-                <svg class="chevron-down" :class="{ open: menuOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  class="chevron-down"
+                  :class="{ open: menuOpen }"
+                  width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true"
+                >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </div>
               <Transition name="dropdown">
-                <div v-if="menuOpen" class="dropdown-menu" @click.stop>
-                  <router-link to="/client/dashboard" class="dropdown-item" @click="closeMenu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div v-if="menuOpen" class="dropdown-menu" role="menu" :aria-label="`Menu de ${username}`" @click.stop>
+                  <router-link
+                    to="/client/dashboard"
+                    class="dropdown-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="closeMenu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Profil
                   </router-link>
-                  <router-link to="/client/favorites" class="dropdown-item" @click="closeMenu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <router-link
+                    to="/client/favorites"
+                    class="dropdown-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="closeMenu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     Favoris
-                    <span v-if="wishlist.count > 0" class="drop-badge">{{ wishlist.count }}</span>
+                    <span v-if="wishlist.count > 0" class="drop-badge" aria-label="Nombre de favoris">{{ wishlist.count }}</span>
                   </router-link>
-                  <div class="dropdown-divider"></div>
-                  <button class="dropdown-item dropdown-logout" @click="handleLogout">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <div class="dropdown-divider" role="separator"></div>
+                  <button
+                    class="dropdown-item dropdown-logout"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="handleLogout"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Déconnexion
                   </button>
                 </div>
@@ -81,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import { useWishlistStore } from '@/stores/wishlist.store'
@@ -98,13 +124,23 @@ const username = computed(() => authStore.user?.username ?? 'User')
 const avatarLetter = computed(() => username.value.charAt(0).toUpperCase())
 
 const menuOpen = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
+  if (menuOpen.value) {
+    nextTick(() => focusItem(0))
+  }
 }
 
 function closeMenu() {
   menuOpen.value = false
+  nextTick(() => menuRef.value?.focus())
+}
+
+function focusItem(index: number) {
+  const items = menuRef.value?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+  if (items && items[index]) items[index].focus()
 }
 
 function handleClickOutside(e: MouseEvent) {
@@ -226,6 +262,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   background: #f8fafc;
 }
 
+.user-tag.tag-open {
+  border-color: #1e2956;
+  background: #f1f5f9;
+}
+
 .user-avatar {
   width: 26px;
   height: 26px;
@@ -237,6 +278,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .user-name {
