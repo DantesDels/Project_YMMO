@@ -135,6 +135,7 @@
               minlength="8"
               autocomplete="new-password"
             />
+            <p class="password-hint">Astuce : majuscule + chiffre + symbole (ex: @, #, $) renforce la sécurité.</p>
           </div>
           <div>
             <label class="label" for="reg-password-confirm">Confirmer le mot de passe</label>
@@ -362,6 +363,13 @@ async function handleRegister(form: Record<string, any>) {
   font-size: 0.8rem;
   color: #dc2626;
   font-weight: 500;
+}
+
+.password-hint {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 .error-msg {
