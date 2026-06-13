@@ -8,13 +8,19 @@
         </router-link>
 
         <nav class="nav-links">
-          <AppButton to="/louer">Louer</AppButton>
-          <template v-if="authStore.user">
-            <AppButton v-if="authStore.user.role === 'Agent'" to="/agent/dashboard">Dashboard</AppButton>
-            <AppButton v-else to="/client/dashboard">Mon compte</AppButton>
+          <AppButton to="/catalog">Catalogue</AppButton>
+          <AppButton to="/informations">À propos</AppButton>
+
+          <span class="nav-sep">|</span>
+
+          <template v-if="isAuthenticated">
+            <AppButton :to="profileRoute">Profil</AppButton>
             <button class="btn-logout" @click="handleLogout">Déconnexion</button>
           </template>
-          <AppButton v-else to="/authentification">Se connecter</AppButton>
+
+          <template v-else>
+            <AppButton to="/authentification">Connexion</AppButton>
+          </template>
         </nav>
       </div>
     </header>
@@ -26,10 +32,10 @@
     <footer class="footer">
       <div class="container">
         <div class="footer-section">
-          <router-link to="/aide">Aide</router-link>
+          <router-link to="/help">Aide</router-link>
           <router-link to="/cgu">CGU</router-link>
-          <router-link to="/mentions-legales">Mentions légales</router-link>
-          <router-link to="/confidentialite">Politique de confidentialité</router-link>
+          <router-link to="/legal-mentions">Mentions légales</router-link>
+          <router-link to="/confidentiality">Politique de confidentialité</router-link>
         </div>
       </div>
     </footer>
@@ -37,12 +43,22 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const router = useRouter()
 const authStore = useAuthentificationStore()
+
+const isAuthenticated = computed(() => !!localStorage.getItem('token'))
+
+const profileRoute = computed(() => {
+  const role = authStore.user?.role
+  if (role === 'Agent') return '/agent/dashboard'
+  if (role === 'Admin') return '/dashboard'
+  return '/client/dashboard'
+})
 
 function handleLogout() {
   authStore.logout()
@@ -121,6 +137,11 @@ function handleLogout() {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+}
+
+.nav-sep {
+  color: #cbd5e1;
+  font-weight: 300;
 }
 
 .btn-logout {
