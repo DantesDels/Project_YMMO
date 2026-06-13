@@ -25,7 +25,18 @@
 
     <section class="contact-card">
       <h3>Vous ne trouvez pas de réponse ?</h3>
-      <p class="updated">Notre équipe support est disponible du lundi au vendredi.</p>
+      <div class="schedule">
+        <div
+          v-for="day in schedule"
+          :key="day.label"
+          :class="['day-row', { today: day.isToday, active: day.isOpen }]"
+        >
+          <span class="day-label">{{ day.label }}</span>
+          <span class="day-hours">{{ day.hours }}</span>
+          <span v-if="day.isToday && day.isOpen" class="status-badge open">Ouvert</span>
+          <span v-if="day.isToday && !day.isOpen" class="status-badge closed">Fermé</span>
+        </div>
+      </div>
       <AppButton to="/support" variant="primary">Contacter le Support</AppButton>
     </section>
   </LegalLayout>
@@ -34,7 +45,7 @@
 <script setup>
 import LegalLayout from '@/layouts/LegalLayout.vue';
 import AppButton from '@/components/ui/AppButton.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const activeIndex = ref(null);
 
@@ -60,6 +71,19 @@ const faqs = ref([
 const toggleFaq = (index) => {
   activeIndex.value = activeIndex.value === index ? null : index;
 };
+
+const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const todayIndex = new Date().getDay();
+
+const schedule = computed(() => [
+  { label: 'Lundi',     hours: '09h00 – 12h30 · 14h00 – 18h00', isOpen: true  },
+  { label: 'Mardi',     hours: '09h00 – 12h30 · 14h00 – 18h00', isOpen: true  },
+  { label: 'Mercredi',  hours: '09h00 – 12h30 · 14h00 – 18h00', isOpen: true  },
+  { label: 'Jeudi',     hours: '09h00 – 12h30 · 14h00 – 18h00', isOpen: true  },
+  { label: 'Vendredi',  hours: '09h00 – 12h30 · 14h00 – 17h00', isOpen: true  },
+  { label: 'Samedi',    hours: '10h00 – 13h00',                 isOpen: true  },
+  { label: 'Dimanche',  hours: 'Fermé',                         isOpen: false },
+].map((d, i) => ({ ...d, isToday: i + 1 === todayIndex || (i === 6 && todayIndex === 0) })));
 </script>
 
 <style scoped>
@@ -97,4 +121,60 @@ const toggleFaq = (index) => {
   text-align: center;
 }
 .contact-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+
+.schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 auto 1.5rem;
+  max-width: 420px;
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.2s;
+}
+
+.day-row.today {
+  background: rgba(16, 185, 129, 0.15);
+  outline: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.day-label {
+  width: 5.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.day-hours {
+  flex: 1;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.status-badge.open {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.closed {
+  background: #ef4444;
+  color: white;
+}
 </style>
