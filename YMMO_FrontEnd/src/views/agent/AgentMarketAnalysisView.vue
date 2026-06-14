@@ -6,9 +6,12 @@
       :navItems="navItems"
       :navItemsBottom="[]"
       title="Analyse Marché"
+      :tocSections="sections"
+      :tocActiveId="tocSectionId"
       @switch-section="switchSection"
       @close="mobileNavOpen = false"
       @logout="handleLogout"
+      @toc-navigate="tocSectionId = $event"
     />
 
     <div class="ama-content">
@@ -16,7 +19,6 @@
         <button class="ama-mobile-toggle" @click="mobileNavOpen = true" aria-label="Ouvrir le menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-        <AnalysisToc :sections="sections" @update:activeId="activeSection = $event" />
         <h1>Analyse de Marché Approfondie</h1>
       </div>
 
@@ -84,11 +86,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
-import AnalysisToc from '@/components/analysisModule/AnalysisToc.vue'
 import AnalysisModule from '@/components/analysisModule/AnalysisModule.vue'
 import MarketOverview from '@/components/analysisModule/MarketOverview.vue'
 import PriceTrendsSection from '@/components/analysisModule/PriceTrendsSection.vue'
@@ -128,7 +129,27 @@ const sMap = computed(() => {
   sections.forEach(s => { map[s.id] = s.expanded })
   return map
 })
-const activeSection = ref('sec-overview')
+const tocSectionId = ref('sec-overview')
+
+let _tick = false
+function onScroll() {
+  if (_tick) return
+  _tick = true
+  requestAnimationFrame(() => {
+    const mid = window.innerHeight / 3
+    let best: string | null = null
+    let bestDist = Infinity
+    for (const s of sections) {
+      const el = document.getElementById(s.id)
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      const dist = Math.abs(rect.top - mid)
+      if (dist < bestDist) { bestDist = dist; best = s.id }
+    }
+    if (best && best !== tocSectionId.value) tocSectionId.value = best
+    _tick = false
+  })
+}
 
 function onToggle(id: string) {
   const s = sections.find(x => x.id === id)
@@ -157,7 +178,11 @@ async function loadFullAnalysis() {
   finally { loading.value = false }
 }
 
-onMounted(loadFullAnalysis)
+onMounted(() => {
+  loadFullAnalysis()
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>

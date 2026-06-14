@@ -18,6 +18,21 @@
       >
         {{ item.label }}
       </button>
+
+      <template v-if="tocSections?.length">
+        <div class="toc-heading">{{ tocSectionTitle }}</div>
+        <button
+          v-for="s in tocSections"
+          :key="s.id"
+          class="toc-btn"
+          :class="{ 'toc-active': tocActiveId === s.id }"
+          @click="scrollToToc(s.id)"
+        >
+          <span class="toc-dot" :class="{ 'toc-dot-on': s.expanded }"></span>
+          <span>{{ s.title }}</span>
+        </button>
+      </template>
+
       <div class="sidebar-separator" role="separator"></div>
       <button
         v-for="item in navItemsBottom"
@@ -48,6 +63,11 @@ interface NavItem {
   id: string
   label: string
 }
+interface TocSection {
+  id: string
+  title: string
+  expanded: boolean
+}
 
 const props = withDefaults(defineProps<{
   activeSection: string
@@ -55,6 +75,9 @@ const props = withDefaults(defineProps<{
   navItems?: NavItem[]
   navItemsBottom?: NavItem[]
   title?: string
+  tocSections?: TocSection[]
+  tocActiveId?: string
+  tocSectionTitle?: string
 }>(), {
   navItems: () => [
     { id: 'profile', label: 'Profil' },
@@ -65,13 +88,22 @@ const props = withDefaults(defineProps<{
     { id: 'sell', label: 'Mes ventes' },
   ],
   title: 'Mon compte',
+  tocSectionTitle: 'Sommaire',
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'switchSection', id: string): void
   (e: 'close'): void
   (e: 'logout'): void
+  (e: 'tocNavigate', id: string): void
 }>()
+
+function scrollToToc(id: string) {
+  emit('tocNavigate', id)
+  emit('close')
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const allNavItems = computed(() => [...props.navItems, ...props.navItemsBottom])
 
@@ -188,6 +220,29 @@ function onTabKeydown(e: KeyboardEvent) {
   font-weight: 600;
 }
 
+.toc-heading {
+  padding: 0.75rem 0.875rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+.toc-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  width: 100%; padding: 0.4rem 0.875rem 0.4rem 1.75rem;
+  border: none; background: none; cursor: pointer;
+  text-align: left; font-size: 0.82rem; color: #475569;
+  transition: background 0.1s, color 0.1s;
+  min-height: 36px; border-radius: 6px;
+}
+.toc-btn:hover { background: #f1f5f9; color: #1e2956; }
+.toc-active { color: #1e2956; font-weight: 600; background: #eef0f6; }
+.toc-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #d1d5db; flex-shrink: 0; transition: background 0.2s;
+}
+.toc-dot-on { background: #1e2956; }
 .sidebar-separator {
   height: 1px;
   background: #e2e8f0;
