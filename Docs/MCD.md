@@ -1,84 +1,179 @@
-﻿# Modèle Conceptuel de Données (MCD) - Projet Ymmo
+﻿# Modèle Conceptuel de Données (MCD) — YMMO
 
 ## 1. Entités et Attributs
 
-* **LOCATION**
-  * **🔑 LocationID** *(Identifiant / Clé Primaire)*
-  * `Address`, `City`, `Region`, `PostalCode`, `Complement`, `Country`
+### **LOCATION**
+- **🔑 LocationID** *(Guid, PK)*
+- `Address` *(string)*
+- `City` *(string)*
+- `Region` *(string)*
+- `PostalCode` *(string)*
+- `Complement` *(string, nullable)*
+- `Country` *(string)*
+
 ---
-* **AGENCY**
-  * **🔑 AgencyID** *(Identifiant / Clé Primaire)*
-  * `Name`, `PhoneNumber`, `Email`
+
+### **AGENCY**
+- **🔑 AgencyID** *(Guid, PK)*
+- `Name` *(string)*
+- `PhoneNumber` *(string)*
+- `Email` *(string)*
+- `LocationId` *(Guid, FK → Location)*
+
 ---
-* **CONTACT** *(Classe Mère / Héritage TPH)*
-  * **🔑 ContactID** *(Identifiant / Clé Primaire)*
-  * `LastName`, `FirstName`, `Email`, `PhoneNumber`, `ContactRole`
+
+### **CONTACT** *(abstract, TPH — Table Per Hierarchy)*
+- **🔑 ContactID** *(Guid, PK)*
+- `LastName` *(string)*
+- `FirstName` *(string)*
+- `Email` *(string, index unique)*
+- `PhoneNumber` *(string)*
+- `PasswordHash` *(string)*
+- `ContactRole` *(enum : Client, Agent, Manager, Admin)*
+- `Discriminator: ContactType` *(string, TPH)*
+
+#### **AGENT** *(hérite de Contact)*
+- `AgencyId` *(Guid, FK → Agency)*
+- `Properties` *(nav)*
+- `LinkedClients` *(nav)*
+- `ManagedOffers` *(nav)*
+
+#### **CLIENT** *(hérite de Contact)*
+- `CreatedAt` *(DateTime)*
+- `Criteria` *(string, nullable — JSON)*
+- `AgentId` *(Guid, nullable, FK → Agent)*
+- `OwnedProperties` *(nav, seller)*
+- `BoughtProperties` *(nav, buyer)*
+- `Offers` *(nav)*
+- `WishlistItems` *(nav)*
+
 ---
-* **AGENT** *(Hérite de Contact)*
-  * *Pas d'attributs supplémentaires spécifiques dans le modèle actuel en dehors des relations.*
+
+### **PROPERTY**
+- **🔑 PropertyID** *(Guid, PK)*
+- `PropertyName` *(string)*
+- `Description` *(string, nullable)*
+- `DateListed` *(DateTime)*
+- `DateSold` *(DateTime, nullable)*
+- `InitialPrice` *(decimal)*
+- `CurrentPrice` *(decimal)*
+- `FinalPrice` *(decimal, nullable)*
+- `PropertyType` *(enum : House, Apartment, Land, Commercial, Office, Garage, Parking)*
+- `Condition` *(enum : New, Excellent, Good, NeedsRefresh, NeedsRenovation, Ruin)*
+- `EnergyClass` *(enum : A–G, Ex)*
+- `YearBuilt` *(int)*
+- `Surface` *(decimal)*
+- `Features` *(string[] — PostgreSQL text[])*
+- `AgencyId` *(Guid, FK → Agency)*
+- `AgentId` *(Guid, nullable, FK → Agent)*
+- `LocationId` *(Guid, FK → Location)*
+- `SellerId` *(Guid, FK → Client)*
+- `BuyerId` *(Guid, nullable, FK → Client)*
+
 ---
-* **CLIENT** *(Hérite de Contact)*
-  * *Note : Les critères de recherche n'apparaissent plus ici car ils sont gérés de manière transitoire via un DTO (PropertySearchCriteria).*
+
+### **OFFER**
+- **🔑 OfferID** *(Guid, PK)*
+- `DateCreated` *(DateTime)*
+- `DateModified` *(DateTime, nullable)*
+- `DatePriceUpdated` *(DateTime, nullable)*
+- `OfferPrice` *(decimal)*
+- `StatusOffer` *(enum : Pending, Negotiation, Accepted, Rejected, Canceled)*
+- `ClientID` *(Guid, FK → Client)*
+- `AgentID` *(Guid, FK → Agent)*
+- `PropertyID` *(Guid, FK → Property)*
+
 ---
-* **PROPERTY**
-  * **🔑 PropertyID** *(Identifiant / Clé Primaire)*
-  * `DateListed`, `DateSold`, `InitialPrice`, `CurrentPrice`, `FinalPrice`, `Condition` *(Anciennement State)*, `PropertyType`, `EnergyClass`, `YearBuilt`, `Surface`, `Features` *(Liste des commodités)*
+
+### **PROPERTYPICTURE**
+- **🔑 PropertyPictureId** *(Guid, PK)*
+- `Url` *(string)*
+- `DisplayOrder` *(int)*
+- `IsMain` *(bool)*
+- `PropertyId` *(Guid, FK → Property)*
+
 ---
-* **OFFER**
-  * **🔑 OfferID** *(Identifiant / Clé Primaire)*
-  * `DateCreated`, `DateModified`, `DatePriceUpdated`, `OfferPrice`, `Status` *(Énumération StatusOffer : Pending, Accepted, etc.)*
----
-* **WISHLIST**
-  * **🔑 WishlistID** *(Identifiant / Clé Primaire)*
+
+### **WISHLISTITEM**
+- **🔑 WishlistItemID** *(Guid, PK)*
+- `ClientID` *(Guid, FK → Client)*
+- `PropertyID` *(Guid, FK → Property)*
+- **Index unique composite** : `(ClientID, PropertyID)`
+
 ---
 
 ## 2. Associations et Cardinalités
 
-* **LOCATION** `(0,N)` <--- *Établir* ---> `(1,1)` **AGENCY**
-  * Une agence (**AGENCY**) est située dans une et une seule adresse (`1,1`).
-  * Une adresse (**LOCATION**) peut abriter zéro ou plusieurs agences (`0,N`).
----
-* **AGENCY** `(0,N)` <--- *Travailler* ---> `(1,1)` **AGENT**
-  * Un agent travaille dans une et une seule agence (`1,1`).
-  * Une agence emploie zéro ou plusieurs agents (`0,N`).
----
-* **AGENT** `(0,N)` <--- *Gérer* ---> `(0,1)` **CLIENT**
-  * Un client est accompagné par zéro ou un agent principal (`0,1`).
-  * Un agent peut accompagner zéro ou plusieurs clients (`0,N`).
----
-* **AGENCY** `(0,N)` <--- *Répertorier* ---> `(1,1)` **PROPERTY**
-  * Un bien immobilier appartient au catalogue d'une seule agence (`1,1`).
-  * Une agence possède zéro ou plusieurs biens dans son catalogue (`0,N`).
----
-* **LOCATION** `(0,N)` <--- *Situer* ---> `(1,1)` **PROPERTY**
-  * Un bien immobilier se situe à une seule adresse (`1,1`).
-  * Une adresse peut contenir zéro ou plusieurs biens (`0,N`).
----
-* **CLIENT** `(0,N)` <--- *Vendre* ---> `(1,1)` **PROPERTY** *(Relation Vendeur)*
-  * Un bien immobilier est mis en vente par un seul client vendeur (`1,1`).
-  * Un client peut mettre en vente zéro ou plusieurs biens (`0,N`).
----
-* **CLIENT** `(0,N)` <--- *Acquérir* ---> `(0,1)` **PROPERTY** *(Relation Acheteur)*
-  * Un bien immobilier peut être acheté par zéro ou un client acheteur (`0,1`).
-  * Un client peut acheter zéro ou plusieurs biens (`0,N`).
----
-* **CLIENT** `(0,N)` <--- *Émettre* ---> `(1,1)` **OFFER**
-  * Une offre est émise par un seul client (`1,1`).
-  * Un client peut émettre zéro ou plusieurs offres (`0,N`).
----
-* **AGENT** `(0,N)` <--- *Superviser* ---> `(1,1)` **OFFER**
-  * Une offre est supervisée ou négociée par un seul agent (`1,1`).
-  * Un agent peut superviser zéro ou plusieurs offres (`0,N`).
----
-* **PROPERTY** `(0,N)` <--- *Concerner* ---> `(1,1)` **OFFER**
-  * Une offre concerne un et un seul bien immobilier (`1,1`).
-  * Un bien immobilier peut recevoir zéro ou plusieurs offres (`0,N`).
----
-* **CLIENT** `(1,1)` <--- *Posséder* ---> `(0,N)` **WISHLIST**
-  * Une ligne de favori appartient à un seul client (`1,1`).
-  * Un client peut avoir zéro ou plusieurs lignes dans sa liste de favoris (`0,N`).
----
-* **PROPERTY** `(0,N)` <--- *Être ciblé* ---> `(1,1)` **WISHLIST**
-  * Une ligne de favori cible un seul bien immobilier (`1,1`).
-  * Un bien immobilier peut être ciblé dans zéro ou plusieurs listes de favoris (`0,N`).
----
+```
+LOCATION (0,N) ——— Établir ——— (1,1) AGENCY
+  Une agence est située à une adresse (1,1).
+  Une adresse peut héberger plusieurs agences (0,N).
+
+AGENCY (0,N) ——— Employer ——— (1,1) AGENT
+  Un agent travaille dans une agence (1,1).
+  Une agence emploie plusieurs agents (0,N).
+
+AGENT (0,N) ——— Gérer ——— (0,1) CLIENT
+  Un client est suivi par 0 ou 1 agent principal (0,1).
+  Un agent peut suivre plusieurs clients (0,N).
+
+AGENCY (0,N) ——— Répertorier ——— (1,1) PROPERTY
+  Un bien appartient au catalogue d'une agence (1,1).
+  Une agence possède plusieurs biens (0,N).
+
+LOCATION (0,N) ——— Situer ——— (1,1) PROPERTY
+  Un bien est situé à une adresse (1,1).
+  Une adresse peut contenir plusieurs biens (0,N).
+
+CLIENT vendeur (0,N) ——— Vendre ——— (1,1) PROPERTY
+  Un bien est mis en vente par un client vendeur (1,1).
+  Un client peut vendre plusieurs biens (0,N).
+
+CLIENT acheteur (0,N) ——— Acquérir ——— (0,1) PROPERTY
+  Un bien peut être acheté par 0 ou 1 client (0,1).
+  Un client peut acheter plusieurs biens (0,N).
+
+CLIENT (0,N) ——— Émettre ——— (1,1) OFFER
+  Une offre est émise par un client (1,1).
+  Un client peut émettre plusieurs offres (0,N).
+
+AGENT (0,N) ——— Superviser ——— (1,1) OFFER
+  Une offre est supervisée par un agent (1,1).
+  Un agent peut superviser plusieurs offres (0,N).
+
+PROPERTY (0,N) ——— Concerne ——— (1,1) OFFER
+  Une offre concerne un bien (1,1).
+  Un bien peut recevoir plusieurs offres (0,N).
+
+PROPERTY (0,N) ——— Illustrer ——— (1,1) PROPERTYPICTURE
+  Une photo illustre un bien (1,1).
+  Un bien peut avoir plusieurs photos (0,N).
+
+CLIENT (1,1) ——— Posséder ——— (0,N) WISHLISTITEM
+  Un favori appartient à un client (1,1).
+  Un client peut avoir plusieurs favoris (0,N).
+
+PROPERTY (0,N) ——— Être ciblé ——— (1,1) WISHLISTITEM
+  Un favori cible un bien (1,1).
+  Un bien peut être dans plusieurs favoris (0,N).
+```
+
+## 3. Règles de gestion
+
+| Entité | DeleteBehavior | Détail |
+|--------|---------------|--------|
+| Property → PropertyPicture | **Cascade** | Supprimer un bien supprime ses photos |
+| Property → Offer | **Cascade** | Supprimer un bien supprime ses offres |
+| WishlistItem → Client, Property | **Cascade** | Supprimer client/property supprime ses favoris |
+| Agent → Properties | **SetNull** | L'agent supprimé : les biens restent (AgentId=NULL) |
+| Client.BuyerId | **SetNull** | Client acheteur supprimé : les biens gardent BuyerId=NULL |
+| Toutes les autres | **Restrict** | Pas de cascade automatique |
+
+## 4. Contraintes techniques
+
+- **TPH** : `Contact` → `Agent` / `Client` dans la table `Contacts` avec discriminateur `ContactType`
+- **Features** : stocké en `text[]` PostgreSQL (liste de chaînes)
+- **Enums** : stockés en `string` via `.HasConversion<string>()`
+- **Index unique composite** : `WishlistItem(ClientID, PropertyID)` — pas de doublons
+- **Index unique** : `Contact.Email`
+- **ID** : `Guid.NewGuid()` généré côté application

@@ -1,37 +1,52 @@
-# Project_YMMO
+# YMMO — Groupe Immobilier
 
-🏢 Contexte Client : Ymmo
-Client : Ymmo, Groupe Immobilier spécialisé dans l'achat/vente résidentiel et professionnel.
+Plateforme web d'achat, vente et analyse de biens immobiliers avec intelligence artificielle.
 
-Implantation : Siège social situé à Aix-en-Provence et 12 agences réparties au niveau national.
+## Architecture
 
-Objectif global : Digitaliser les processus de l'entreprise et exploiter l'Intelligence Artificielle pour guider les décisions stratégiques.
+```
+Frontend (Vue 3) ──► Nginx ──┬──► Backend .NET 10 ──► PostgreSQL 16
+                              └──► DataScience Python ──► Agrégation 2M biens
+```
 
+Trois projets indépendants, orchestrés par Docker Compose :
 
-💻 Besoins DEV (Développement)
-Plateforme Web : Création d'une plateforme centralisée dédiée à l'achat et la vente de biens.
+| Projet | Technologie | Rôle |
+|--------|------------|------|
+| `YMMO_BackEnd/` | .NET 10 + EF Core + PostgreSQL | API REST, auth JWT, CRUD biens/clients/offres |
+| `YMMO_FrontEnd/` | Vue 3 + Vite + Pinia + Chart.js | SPA, catalogue, analyse marché, dashboard agent/client |
+| `YMMO_DataScience/` | Python FastAPI + scikit-learn | Analyse marché 2M biens, prévisions IA |
 
-Accès Utilisateurs : Interfaces prévues pour les clients ET les agents immobiliers.
+## Démarrage rapide
 
-Data & IA : Intégration d'analyses de données et de prévisions IA pour identifier les tendances du marché, les biens populaires et les zones à cibler.
+```bash
+# Tout en Docker
+docker compose up -d
+# → http://localhost:8080
 
-🖧 Besoins INFRA (Infrastructure & Réseau)
-Architecture : Conception d'une architecture réseau à la fois sécurisée et scalable.
+# Ou en développement
+cd YMMO_FrontEnd && npm run dev  # → http://localhost:5173
+cd YMMO_BackEnd && dotnet run    # → http://localhost:5000
+```
 
-Connectivité : Déploiement d'un réseau VPN/IPSec reliant le siège aux 12 agences.
+## Documentation
 
-Dimensionnement :
+Toute la documentation technique se trouve dans [`Docs/`](Docs/) :
 
-Siège : environ 30 postes, 2 serveurs et une imprimante.
+| Document | Description |
+|----------|-------------|
+| [architecture.md](Docs/architecture.md) | Architecture globale, flux front↔back, sécurité |
+| [backend.md](Docs/backend.md) | Structure .NET 10, Clean Architecture, endpoints |
+| [frontend.md](Docs/frontend.md) | Vue 3, Pinia, Router, stores, composants |
+| [datascience.md](Docs/datascience.md) | Python FastAPI, agrégateur 2M, fallback pattern |
+| [docker-deployment.md](Docs/docker-deployment.md) | Docker Compose, builds, nginx, déploiement |
+| [technologies.md](Docs/technologies.md) | Stack complète avec justifications |
+| [api-reference.md](Docs/api-reference.md) | Tous les endpoints REST |
+| [MCD.md](Docs/MCD.md) | Modèle Conceptuel de Données |
+| [Launch.md](Docs/Launch.md) | Guide de démarrage |
+| [.PRD.md](Docs/.PRD.md) | Product Requirements Document |
+| [Justification_Choix.md](Docs/Justification_Choix.md) | Décisions architecturales |
 
-Serveur Windows AD/GPO
+## Licence
 
-Serveur Linux Website
-
-Agences : environ 5 postes chacune et une imprimante.
-
-
-📦 Livrables Principaux
-Côté DEV : Site web d'achat/vente fonctionnel, documentations fonctionnelle et technique, ainsi que le code source versionné sur GitHub.
-
-Côté INFRA : Schéma d'architecture réseau, plan d'adressage IP, politique de sécurité, plan de gestion des droits d'accès, solution Cloud (Azure/AWS) et une démonstration VM.
+MIT
