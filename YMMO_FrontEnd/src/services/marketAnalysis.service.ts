@@ -178,24 +178,15 @@ export function computePopular() {
   }
 
   return {
-    types: {
-      types: Object.entries(typeCounts)
-        .map(([type, count]) => ({ type, count, percentage: round(count / props.length * 100, 1) }))
-        .sort((a, b) => b.count - a.count),
-      total: props.length,
-    },
-    features: {
-      features: Object.entries(featureCounts)
-        .map(([feature, count]) => ({ feature, count, percentage: round(count / props.length * 100, 1) }))
-        .sort((a, b) => b.count - a.count),
-      total: props.length,
-    },
-    conditions: {
-      conditions: Object.entries(condCounts)
-        .map(([condition, count]) => ({ condition, count, percentage: round(count / props.length * 100, 1) }))
-        .sort((a, b) => b.count - a.count),
-      total: props.length,
-    },
+    types: Object.entries(typeCounts)
+      .map(([type, count]) => ({ type, count, percentage: round(count / props.length * 100, 1) }))
+      .sort((a, b) => b.count - a.count),
+    features: Object.entries(featureCounts)
+      .map(([feature, count]) => ({ feature, count, percentage: round(count / props.length * 100, 1) }))
+      .sort((a, b) => b.count - a.count),
+    conditions: Object.entries(condCounts)
+      .map(([condition, count]) => ({ condition, count, percentage: round(count / props.length * 100, 1) }))
+      .sort((a, b) => b.count - a.count),
     avgPriceByType: Object.entries(byType).map(([type, prices]) => ({
       type,
       avgPrice: round(avg(prices)),
