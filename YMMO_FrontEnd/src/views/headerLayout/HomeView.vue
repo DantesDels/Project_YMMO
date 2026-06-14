@@ -44,14 +44,32 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue';
+import { getFullAnalysis } from '@/api/datascience';
 
-const stats = [
-  { value: '2,847+', label: 'Biens vendus' },
-  { value: '12', label: 'Agences' },
-  { value: '98%', label: 'Clients satisfaits' },
-  { value: '15+', label: 'Villes couvertes' }
-];
+const stats = ref<{ value: string; label: string }[]>([
+  { value: '…', label: 'Biens analysés' },
+  { value: '…', label: 'Prix moyen' },
+  { value: '…', label: 'Villes couvertes' },
+  { value: '…', label: 'Types de biens' },
+])
+
+onMounted(async () => {
+  try {
+    const d = await getFullAnalysis({ period: 'yearly' })
+    const s = d.trends.summary
+    const fmt = (n: number) => n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M' : n >= 1_000 ? (n / 1_000).toFixed(0) + 'k' : String(n)
+    stats.value = [
+      { value: fmt(s.totalListings), label: 'Biens analysés' },
+      { value: s.globalAvgPrice.toLocaleString('fr-FR') + ' €', label: 'Prix moyen' },
+      { value: String(d.zones.zones.length), label: 'Villes couvertes' },
+      { value: String(d.popular.types.length), label: 'Types de biens' },
+    ]
+  } catch {
+    /* laisse les '…' si erreur */
+  }
+})
 </script>
 
 <style scoped>
