@@ -1,274 +1,163 @@
 ﻿<template>
   <div class="results-container">
-    <div class="results-header">
-      <h2>{{ totalCount }} logement{{ totalCount === 1 ? '' : 's' }} disponible{{ totalCount === 1 ? '' : 's' }}</h2>
-      <div class="header-right">
-        <select v-model="perPage" class="per-page-select" @change="currentPage = 1">
-          <option :value="10">10 / page</option>
-          <option :value="20">20 / page</option>
-          <option :value="40">40 / page</option>
-          <option :value="100">100 / page</option>
-        </select>
-        <select v-model="sortOrder" class="sort-select">
-          <option value="default">Meilleurs résultats</option>
-          <option value="asc">Prix croissant</option>
-          <option value="desc">Prix décroissant</option>
-        </select>
-      </div>
+    <div class="sort-bar">
+      <select v-model="sortKey" aria-label="Trier par">
+        <option value="price">Prix</option>
+        <option value="surface">Surface</option>
+        <option value="rooms">Pièces</option>
+      </select>
+      <select v-model="sortOrder" aria-label="Ordre">
+        <option value="asc">Croissant</option>
+        <option value="desc">Décroissant</option>
+      </select>
+      <select v-model="perPage" aria-label="Résultats par page">
+        <option :value="12">12 / page</option>
+        <option :value="24">24 / page</option>
+        <option :value="48">48 / page</option>
+      </select>
     </div>
 
-    <div v-if="isLoading" class="loading-state">
-      Recherche en cours...
+    <p class="result-count">{{ totalCount }} résultat(s)</p>
+
+    <nav class="pagination top-pagination" v-if="totalPages > 1" aria-label="Pagination des résultats">
+      <button :disabled="page <= 1" @click="page = 1" aria-label="Première page">&laquo;</button>
+      <button :disabled="page <= 1" @click="page = Math.max(1, page - 10)" aria-label="-10 pages">&lsaquo;10</button>
+      <button :disabled="page <= 1" @click="page--" aria-label="Page précédente">&lsaquo;</button>
+
+      <template v-for="p in visiblePages" :key="p">
+        <span v-if="p === '...'" class="dots">...</span>
+        <button v-else :class="{ active: p === page }" @click="page = p" :aria-label="`Page ${p}`" :aria-current="p === page ? 'page' : undefined">{{ p }}</button>
+      </template>
+
+      <button :disabled="page >= totalPages" @click="page++" aria-label="Page suivante">&rsaquo;</button>
+      <button :disabled="page >= totalPages" @click="page = Math.min(totalPages, page + 10)" aria-label="+10 pages">10&rsaquo;</button>
+      <button :disabled="page >= totalPages" @click="page = totalPages" aria-label="Dernière page">&raquo;</button>
+    </nav>
+
+    <div class="property-grid">
+      <PropertyCard v-for="prop in paginatedProperties" :key="prop.id" :property="prop" />
     </div>
 
-    <template v-else-if="totalCount > 0">
-      <div class="properties-grid">
-        <PropertyCard
-            v-for="prop in paginatedProperties"
-            :key="prop.id"
-            :property="prop"
-        />
-      </div>
+    <nav class="pagination" v-if="totalPages > 1" aria-label="Pagination des résultats">
+      <button :disabled="page <= 1" @click="page = 1" aria-label="Première page">&laquo;</button>
+      <button :disabled="page <= 1" @click="page = Math.max(1, page - 10)" aria-label="-10 pages">&lsaquo;10</button>
+      <button :disabled="page <= 1" @click="page--" aria-label="Page précédente">&lsaquo;</button>
 
-      <div v-if="totalPages > 1" class="pagination">
-        <button class="page-btn" :disabled="currentPage <= 1" @click="currentPage = 1" title="Première page">
-          «
-        </button>
-        <button class="page-btn" :disabled="currentPage <= 1" @click="jumpPage(-10)">
-          ‹
-        </button>
-        <button class="page-btn" :disabled="currentPage <= 1" @click="currentPage = currentPage - 1">
-          ←
-        </button>
+      <template v-for="p in visiblePages" :key="p">
+        <span v-if="p === '...'" class="dots">...</span>
+        <button v-else :class="{ active: p === page }" @click="page = p" :aria-label="`Page ${p}`" :aria-current="p === page ? 'page' : undefined">{{ p }}</button>
+      </template>
 
-        <button
-          v-for="p in visiblePages"
-          :key="p"
-          :class="['page-btn', { active: p === currentPage }]"
-          @click="currentPage = p"
-        >
-          {{ p }}
-        </button>
-
-        <button class="page-btn" :disabled="currentPage >= totalPages" @click="currentPage = currentPage + 1">
-          →
-        </button>
-        <button class="page-btn" :disabled="currentPage >= totalPages" @click="jumpPage(10)">
-          ›
-        </button>
-        <button class="page-btn" :disabled="currentPage >= totalPages" @click="currentPage = totalPages" title="Dernière page">
-          »
-        </button>
-      </div>
-    </template>
-
-    <div v-else class="no-results">
-      Aucun bien trouvé pour ces critères.
-    </div>
+      <button :disabled="page >= totalPages" @click="page++" aria-label="Page suivante">&rsaquo;</button>
+      <button :disabled="page >= totalPages" @click="page = Math.min(totalPages, page + 10)" aria-label="+10 pages">10&rsaquo;</button>
+      <button :disabled="page >= totalPages" @click="page = totalPages" aria-label="Dernière page">&raquo;</button>
+    </nav>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import PropertyCard from './PropertyCard.vue';
-import { useFilterStore } from '@/stores/filterStore';
-import { generateMockProperties } from '@/utils/mockData';
+import { ref, computed } from 'vue'
+import { useFilterStore } from '@/stores/filterStore'
+import { useCustomProperties } from '@/stores/customProperties.store'
+import { generateMockProperties } from '@/utils/mockData'
+import PropertyCard from '@/components/PropertyCard.vue'
 
-const props = defineProps({
-  mode: { type: String, default: 'mock' },
-  allProperties: { type: Array, default: () => [] },
-  isLoading: { type: Boolean, default: false },
-  mockCount: { type: Number, default: 400 },
-});
+const filterStore = useFilterStore()
+const { getAll: getCustomProperties } = useCustomProperties()
 
-const filterStore = useFilterStore();
-const sortOrder = ref('default');
-const perPage = ref(20);
-const currentPage = ref(1);
+const sortKey = ref('price')
+const sortOrder = ref('asc')
+const perPage = ref(12)
+const page = ref(1)
 
-const mockProperties = generateMockProperties(props.mockCount);
-
-function normalizeProperty(p) {
-  if (props.mode === 'api') {
-    return {
-      id: p.propertyId,
-      title: p.propertyName,
-      type: p.propertyType,
-      condition: p.condition,
-      price: p.currentPrice,
-      surface: p.surface,
-      address: `${p.city} (${p.postalCode})`,
-      mainFeatures: p.mainFeatures ?? [],
-      image: `https://picsum.photos/seed/${p.propertyId}/400/300`,
-      availabilityDate: null,
-      rooms: null,
-      furnishing: null,
-      energyClass: null,
-    };
-  }
-  return p;
-}
+const mockProperties = computed(() => {
+  const generated = generateMockProperties(400)
+  const custom = getCustomProperties()
+  return [...custom, ...generated]
+})
 
 const filteredMock = computed(() => {
-  const f = filterStore.filters;
-
-  return mockProperties.filter(p => {
-    const q = (f.city || '').toLowerCase();
-    const queryMatch = !q || p.title.toLowerCase().includes(q) || p.address.toLowerCase().includes(q);
-    const priceMatch = p.price >= f.minPrice && p.price <= f.maxPrice;
-    const surfaceMatch = p.surface >= f.minSurface && p.surface <= f.maxSurface;
-    const typeMatch = f.types.length === 0 || f.types.includes(p.type);
-    const conditionMatch = f.conditions.length === 0 || f.conditions.includes(p.condition);
-    const energyMatch = f.energyClasses.length === 0 || f.energyClasses.includes(p.energyClass);
-    const roomsMatch = f.rooms.length === 0 || f.rooms.some(r => p.rooms >= Number(r));
-    const furnishingMatch = !f.furnishing || p.furnishing === f.furnishing;
-    const criteriaMatch = f.requiredCriteria.every(c => p.mainFeatures.includes(c));
-
+  const f = filterStore.filters
+  return mockProperties.value.filter(p => {
+    const q = (f.city || '').toLowerCase()
+    const queryMatch = !q || p.title.toLowerCase().includes(q) || p.address.toLowerCase().includes(q)
+    const priceMatch = p.price >= f.minPrice && p.price <= f.maxPrice
+    const surfaceMatch = p.surface >= f.minSurface && p.surface <= f.maxSurface
+    const typeMatch = f.types.length === 0 || f.types.includes(p.type)
+    const conditionMatch = f.conditions.length === 0 || f.conditions.includes(p.condition)
+    const energyMatch = f.energyClasses.length === 0 || f.energyClasses.includes(p.energyClass)
+    const roomsMatch = f.rooms.length === 0 || f.rooms.some(r => p.rooms >= Number(r))
+    const furnishingMatch = !f.furnishing || p.furnishing === f.furnishing
+    const criteriaMatch = f.requiredCriteria.every(c => p.mainFeatures.includes(c))
     return queryMatch && priceMatch && surfaceMatch && typeMatch &&
         conditionMatch && energyMatch && roomsMatch &&
-        furnishingMatch && criteriaMatch;
-  });
-});
+        furnishingMatch && criteriaMatch
+  })
+})
 
 const displayedProperties = computed(() => {
-  const raw = props.mode === 'api' ? props.allProperties : filteredMock.value;
-  return raw.map(normalizeProperty);
-});
+  return filteredMock.value.map(p => ({
+    ...p,
+    image: p.image || (p.pictures?.[0]?.url) || 'https://via.placeholder.com/300',
+  }))
+})
 
 const sortedProperties = computed(() => {
-  const list = [...displayedProperties.value];
-  if (sortOrder.value === 'asc') return list.sort((a, b) => a.price - b.price);
-  if (sortOrder.value === 'desc') return list.sort((a, b) => b.price - a.price);
-  return list;
-});
+  const arr = [...displayedProperties.value]
+  arr.sort((a, b) => {
+    const va = a[sortKey.value] ?? 0
+    const vb = b[sortKey.value] ?? 0
+    return sortOrder.value === 'asc' ? va - vb : vb - va
+  })
+  return arr
+})
 
-const totalCount = computed(() => sortedProperties.value.length);
+const totalCount = computed(() => sortedProperties.value.length)
 
-const totalPages = computed(() => Math.ceil(totalCount.value / perPage.value) || 1);
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / perPage.value)))
 
 const paginatedProperties = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value;
-  return sortedProperties.value.slice(start, start + perPage.value);
-});
+  const start = (page.value - 1) * perPage.value
+  return sortedProperties.value.slice(start, start + perPage.value)
+})
 
 const visiblePages = computed(() => {
-  const total = totalPages.value;
-  const current = currentPage.value;
-  const pages = [];
-  const maxVisible = 5;
-
-  if (total <= maxVisible + 2) {
-    for (let i = 1; i <= total; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    const half = Math.floor((maxVisible - 1) / 2);
-    let start = Math.max(2, current - half);
-    let end = Math.min(total - 1, current + half);
-
-    if (end - start + 1 < maxVisible - 1) {
-      if (start === 2) end = start + maxVisible - 2;
-      else start = end - maxVisible + 2;
-    }
-
-    if (start > 2) pages.push('...');
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (end < total - 1) pages.push('...');
-    pages.push(total);
+  const total = totalPages.value
+  const cur = page.value
+  const maxVisible = 5
+  if (total <= maxVisible) {
+    return Array.from({ length: total }, (_, i) => i + 1)
   }
-  return pages;
-});
-
-function jumpPage(offset) {
-  const next = currentPage.value + offset;
-  currentPage.value = Math.max(1, Math.min(totalPages.value, next));
-}
-
-watch([filterStore.filters, sortOrder], () => {
-  currentPage.value = 1;
-}, { deep: true });
+  const pages = []
+  let start = Math.max(1, cur - 2)
+  let end = Math.min(total, start + maxVisible - 1)
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1)
+  }
+  if (start > 1) pages.push(1)
+  if (start > 2) pages.push('...')
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (end < total - 1) pages.push('...')
+  if (end < total) pages.push(total)
+  return pages
+})
 </script>
 
 <style scoped>
-.results-container { padding: 2rem 0; width: 100%; }
-
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.per-page-select,
-.sort-select {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  background: white;
-  font-size: 0.85rem;
-  color: #475569;
-}
-
-.properties-grid {
+.results-container { padding: 2rem 0; }
+.sort-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.sort-bar select { padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; background: white; font-size: 0.9rem; }
+.result-count { font-size: 1rem; color: #6b7280; margin-bottom: 1.5rem; }
+.property-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
 }
-
-.loading-state, .no-results {
-  text-align: center;
-  padding: 3rem 0;
-  color: #64748b;
-  font-size: 0.95rem;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 2rem;
-}
-
-.page-btn {
-  min-width: 36px;
-  height: 36px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  color: #475569;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  padding: 0 0.5rem;
-}
-
-.page-btn:hover:not(:disabled):not(.active) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.page-btn.active {
-  background: #1e2956;
-  border-color: #1e2956;
-  color: white;
-}
-
-.page-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
+.pagination { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-top: 2rem; flex-wrap: wrap; }
+.pagination button { min-width: 2.25rem; height: 2.25rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; }
+.pagination button:hover:not(:disabled) { background: #f3f4f6; border-color: #9ca3af; }
+.pagination button:disabled { opacity: 0.35; cursor: default; }
+.pagination button.active { background: #1e2956; color: white; border-color: #1e2956; font-weight: 700; }
+.pagination .dots { min-width: 2.25rem; text-align: center; color: #6b7280; font-size: 0.9rem; }
+.top-pagination { margin-bottom: 1.5rem; }
 </style>

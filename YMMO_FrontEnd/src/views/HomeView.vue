@@ -66,7 +66,12 @@ const stats = [
   background: url('/images/hero-bg.webp');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   z-index: -2;
+}
+
+@media (min-width: 2000px) {
+  .hero-bg { background-size: 100% auto; }
 }
 
 .hero-overlay {
@@ -171,12 +176,23 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  .hero {
+    min-height: auto;
+    padding-bottom: 6rem;
+  }
+
   .hero-stats {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
     flex-wrap: wrap;
     justify-content: center;
     gap: 1.5rem 2rem;
-    bottom: 1.5rem;
+    margin-top: 3rem;
+    width: 100%;
   }
+
   .cta-group {
     flex-direction: column;
     width: 100%;

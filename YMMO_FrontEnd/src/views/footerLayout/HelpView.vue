@@ -11,7 +11,12 @@
           :key="index"
           class="faq-item"
           :class="{ active: activeIndex === index }"
+          role="button"
+          tabindex="0"
+          :aria-expanded="activeIndex === index"
           @click="toggleFaq(index)"
+          @keydown.enter.prevent="toggleFaq(index)"
+          @keydown.space.prevent="toggleFaq(index)"
       >
         <div class="faq-question">
           <span>{{ item.question }}</span>
@@ -185,5 +190,12 @@ const schedule = computed(() => [
 .status-badge.closed {
   background: #ef4444;
   color: white;
+}
+
+@media (max-width: 480px) {
+  .help-header h1 { font-size: 1.75rem; }
+  .contact-card { padding: 1.25rem; }
+  .day-row { flex-wrap: wrap; gap: 0.4rem; }
+  .day-label { width: 100%; }
 }
 </style>

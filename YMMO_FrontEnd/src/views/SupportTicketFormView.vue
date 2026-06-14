@@ -66,7 +66,17 @@ const submitTicket = () => {
 <style scoped>
 .support-container { max-width: 1000px; margin: 4rem auto; padding: 0 2rem; }
 .support-header { text-align: center; margin-bottom: 3rem; }
+.support-header h1 {
+  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 .support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+@media (max-width: 767px) {
+  .support-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .support-container { padding: 0 1rem; margin: 2rem auto; }
+}
 
 .form-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
 label { font-weight: 600; margin-bottom: 0.5rem; color: #1e2956; }

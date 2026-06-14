@@ -7,6 +7,47 @@
           <span class="logo-text">YMMO</span>
         </router-link>
 
+        <HamburgerMenu v-slot="{ close }">
+          <AppButton to="/catalog" @click="close">Catalogue</AppButton>
+          <AppButton to="/informations" @click="close">À propos</AppButton>
+          <hr class="mobile-divider" />
+          <template v-if="isAuthenticated">
+            <router-link v-if="isAgent" to="/agent/dashboard" class="mobile-item" @click="close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profil Agent
+            </router-link>
+            <router-link v-else to="/client/dashboard" class="mobile-item" @click="close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profil
+            </router-link>
+            <router-link v-if="isAgent" to="/portfolio/new" class="mobile-item" @click="close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter un bien
+            </router-link>
+            <router-link v-if="!isAgent" to="/client/favorites" class="mobile-item" @click="close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Favoris
+              <span v-if="wishlist.count > 0" class="drop-badge" aria-label="Nombre de favoris">{{ wishlist.count }}</span>
+            </router-link>
+            <button class="mobile-item mobile-logout" @click="handleLogout">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Déconnexion
+            </button>
+          </template>
+          <template v-else>
+            <AppButton to="/authentification" @click="close">Connexion</AppButton>
+          </template>
+          <div class="mobile-footer-links">
+            <AppButton variant="link" to="/help" @click="close">Aide</AppButton>
+            <span class="mobile-underscore" aria-hidden="true">_</span>
+            <AppButton variant="link" to="/cgu" @click="close">CGU</AppButton>
+            <span class="mobile-underscore" aria-hidden="true">_</span>
+            <AppButton variant="link" to="/legal-mentions" @click="close">Mentions légales</AppButton>
+            <span class="mobile-underscore" aria-hidden="true">_</span>
+            <AppButton variant="link" to="/confidentiality" @click="close">Politique de confidentialité</AppButton>
+          </div>
+        </HamburgerMenu>
+
         <nav class="nav-links" aria-label="Navigation principale">
           <AppButton to="/catalog">Catalogue</AppButton>
           <AppButton to="/informations">À propos</AppButton>
@@ -43,6 +84,18 @@
               <Transition name="dropdown">
                 <div v-if="menuOpen" class="dropdown-menu" role="menu" :aria-label="`Menu de ${username}`" @click.stop>
                   <router-link
+                    v-if="isAgent"
+                    to="/agent/dashboard"
+                    class="dropdown-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="closeMenu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Profil Agent
+                  </router-link>
+                  <router-link
+                    v-else
                     to="/client/dashboard"
                     class="dropdown-item"
                     role="menuitem"
@@ -53,6 +106,7 @@
                     Profil
                   </router-link>
                   <router-link
+                    v-if="!isAgent"
                     to="/client/favorites"
                     class="dropdown-item"
                     role="menuitem"
@@ -62,6 +116,17 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     Favoris
                     <span v-if="wishlist.count > 0" class="drop-badge" aria-label="Nombre de favoris">{{ wishlist.count }}</span>
+                  </router-link>
+                  <router-link
+                    v-if="isAgent"
+                    to="/portfolio/new"
+                    class="dropdown-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="closeMenu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Ajouter un bien
                   </router-link>
                   <div class="dropdown-divider" role="separator"></div>
                   <button
@@ -112,13 +177,14 @@ import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
 import { useWishlistStore } from '@/stores/wishlist.store'
 import AppButton from '@/components/ui/AppButton.vue'
+import HamburgerMenu from '@/components/ui/HamburgerMenu.vue'
 
 const router = useRouter()
 const authStore = useAuthentificationStore()
 const wishlist = useWishlistStore()
-const favCount = computed(() => wishlist.count)
 
-const isAuthenticated = computed(() => !!localStorage.getItem('token'))
+const isAuthenticated = computed(() => !!authStore.user)
+const isAgent = computed(() => authStore.user?.role === 'Agent')
 
 const username = computed(() => authStore.user?.username ?? 'User')
 const avatarLetter = computed(() => username.value.charAt(0).toUpperCase())
@@ -174,6 +240,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  .layout-wrapper { padding: 0.5rem; }
 }
 
 .container {
@@ -457,5 +529,59 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 @keyframes toast-in {
   from { opacity: 0; translate: -50% 1rem; }
   to   { opacity: 1; translate: -50% 0; }
+}
+
+.mobile-divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 0.75rem 0;
+}
+
+.mobile-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.mobile-item:hover {
+  background: #f1f5f9;
+  color: #1e2956;
+}
+
+.mobile-logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.mobile-footer-links {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.5rem;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.mobile-underscore {
+  color: #d1d5db;
+  user-select: none;
+  line-height: 1;
+}
+
+@media (max-width: 767px) {
+  .nav-links { display: none; }
 }
 </style>

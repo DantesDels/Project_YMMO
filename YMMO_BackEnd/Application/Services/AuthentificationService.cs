@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using YMMO.Backend.Application.DTOs.Authentification;
 using YMMO.Backend.Application.Interfaces;
 using YMMO.Backend.Domain.Entities;
+using YMMO.Backend.Domain.Enums;
 using YMMO.Backend.Domain.Interfaces;
 using YMMO.Backend.Domain.Repositories;
 
@@ -126,5 +127,59 @@ public class AuthentificationService : IAuthentificationService
     public async Task LogoutAsync(string token)
     {
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Debug agent login — bypasses the database entirely.
+    ///
+    /// How it works:
+    /// 1. Reads Debug:EnableAgentAccount from IConfiguration; throws if disabled.
+    /// 2. Compares the supplied credentials against Debug:AgentEmail / Debug:AgentPassword.
+    /// 3. On match, fabricates an in-memory Agent object with a fixed ContactId
+    ///    and calls GenerateJwtToken, which produces a real, valid JWT with the Agent role.
+    ///
+    /// Purpose: lets developers test agent-specific frontend features (dashboard,
+    /// property CRUD, offers, etc.) without needing a seeded database or a real
+    /// agent registration flow.
+    ///
+    /// Security: this endpoint is intentionally excluded from Swagger docs
+    /// ([ApiExplorerSettings(IgnoreApi = true)]) and MUST be disabled in production
+    /// by setting Debug:EnableAgentAccount to false in the hosting config.
+    /// </summary>
+    public Task<AuthentificationDto.AuthentificationResponse> DebugLoginAsync(AuthentificationDto.DebugLoginRequest request)
+    {
+        var debugEnabled = _config.GetValue<bool>("Debug:EnableAgentAccount");
+        if (!debugEnabled)
+        {
+            throw new UnauthorizedAccessException("Debug agent account is disabled.");
+        }
+
+        var expectedEmail = _config["Debug:AgentEmail"];
+        var expectedPassword = _config["Debug:AgentPassword"];
+
+        if (request.Email != expectedEmail || request.Password != expectedPassword)
+        {
+            throw new UnauthorizedAccessException("Invalid debug agent credentials.");
+        }
+
+        // Build a minimal in-memory Agent — no DB call, no password hashing.
+        var debugAgent = new Agent
+        {
+            ContactId = new Guid("DEB8A001-0001-0001-0001-000000000001"),
+            FirstName = "Debug",
+            LastName = "Agent",
+            Email = expectedEmail!,
+            PhoneNumber = "+33100000000",
+            AgencyId = new Guid("DEB8A001-0001-0001-0001-000000000001"),
+        };
+        debugAgent.SetRole(ContactRole.Agent);
+
+        var token = GenerateJwtToken(debugAgent);
+
+        return Task.FromResult(new AuthentificationDto.AuthentificationResponse(
+            token,
+            debugAgent.FirstName,
+            debugAgent.ContactId
+        ));
     }
 }

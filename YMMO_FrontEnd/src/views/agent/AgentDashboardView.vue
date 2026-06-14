@@ -1,181 +1,199 @@
 <template>
-  <div class="dashboard">
-    <aside class="sidebar">
-      <h2 class="sidebar-title">Espace Agent</h2>
-      <nav class="sidebar-nav">
-        <button
-          v-for="item in navItems"
-          :key="item.id"
-          :class="['nav-btn', { active: activeSection === item.id }]"
-          @click="activeSection = item.id"
-        >
-          {{ item.label }}
-        </button>
-      </nav>
-      <button class="logout-btn" @click="handleLogout">Déconnexion</button>
-    </aside>
+  <div class="dash-wrapper">
+    <button
+      class="mobile-nav-toggle"
+      @click="mobileNavOpen = !mobileNavOpen"
+      :aria-label="mobileNavOpen ? 'Fermer la navigation' : 'Ouvrir la navigation'"
+      :aria-expanded="mobileNavOpen"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
 
-    <main class="main">
-      <!-- Profil -->
-      <section v-if="activeSection === 'profile'" class="section-card">
-        <h3 class="section-title">Mon profil</h3>
-        <p v-if="authStore.user">Bienvenue, <strong>{{ authStore.user.username }}</strong></p>
-        <p>Rôle : {{ authStore.user?.role }}</p>
-      </section>
+    <div class="dash-container">
+      <DashboardSidebar
+        :activeSection="activeSection"
+        :mobileNavOpen="mobileNavOpen"
+        :navItems="agentNavItems"
+        :navItemsBottom="agentNavItemsBottom"
+        title="Espace Agent"
+        @switch-section="switchSection"
+        @close="mobileNavOpen = false"
+        @logout="handleLogout"
+      />
 
-      <!-- Mes biens -->
-      <section v-if="activeSection === 'properties'" class="section-card">
-        <div class="section-header">
-          <h3 class="section-title">Mes biens</h3>
-          <router-link to="/portfolio/new" class="btn-sm">+ Ajouter</router-link>
-        </div>
-        <div v-if="loading" class="text-muted">Chargement...</div>
-        <div v-else-if="myProperties.length === 0" class="text-muted">Aucun bien pour le moment.</div>
-        <div v-else class="property-list">
-          <div v-for="p in myProperties" :key="p.propertyId" class="property-row">
-            <div class="prop-info">
-              <strong>{{ p.propertyName }}</strong>
-              <span class="prop-meta">{{ p.city }} - {{ formatPrice(p.currentPrice) }}</span>
+      <main class="main" role="main">
+        <div aria-live="polite" class="sr-only">{{ statusMessage }}</div>
+
+        <!-- Profil -->
+        <section v-if="activeSection === 'profile'" id="panel-profile" class="section-card" role="tabpanel" aria-labelledby="tab-profile">
+          <h3 class="section-title">Mon profil</h3>
+          <div class="profile-info">
+            <div class="profile-avatar">{{ avatarLetter }}</div>
+            <div>
+              <p class="profile-name" v-if="authStore.user"><strong>{{ authStore.user.username }}</strong></p>
+              <p class="profile-role">{{ roleLabel }}</p>
             </div>
-            <span class="badge-type">{{ p.propertyType }}</span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Demandes clients -->
-      <section v-if="activeSection === 'requests'" class="section-card">
-        <h3 class="section-title">Demandes de vente</h3>
-        <p class="text-muted">Aucune demande en attente.</p>
-      </section>
+        <!-- Mes biens -->
+        <section v-if="activeSection === 'wishlist'" id="panel-wishlist" class="section-card" role="tabpanel" aria-labelledby="tab-wishlist">
+          <div class="section-header">
+            <h3 class="section-title">Mes biens</h3>
+            <router-link to="/portfolio/new" class="btn-sm">+ Ajouter un bien</router-link>
+          </div>
+          <div v-if="loading" class="text-muted">Chargement...</div>
+          <div v-else-if="properties.length === 0" class="text-muted">Aucun bien pour le moment.</div>
+          <div v-else class="property-list">
+            <div v-for="p in properties" :key="p.id" class="property-row">
+              <div class="prop-info">
+                <strong>{{ p.title || p.propertyName }}</strong>
+                <span class="prop-meta">{{ p.city || (p.address || '').replace(/\(.*\)/, '').trim() }} — {{ formatPrice(p.price || p.currentPrice) }}</span>
+              </div>
+              <span class="badge-type">{{ p.type || p.propertyType }}</span>
+            </div>
+          </div>
+        </section>
 
-      <!-- Offres -->
-      <section v-if="activeSection === 'offers'" class="section-card">
-        <h3 class="section-title">Offres reçues</h3>
-        <p class="text-muted">Aucune offre pour le moment.</p>
-      </section>
-    </main>
+        <!-- Demandes clients -->
+        <section v-if="activeSection === 'offers'" id="panel-offers" class="section-card" role="tabpanel" aria-labelledby="tab-offers">
+          <h3 class="section-title">Demandes de vente</h3>
+          <p class="text-muted">Aucune demande en attente.</p>
+        </section>
+
+        <!-- Offres -->
+        <section v-if="activeSection === 'sell'" id="panel-sell" class="section-card" role="tabpanel" aria-labelledby="tab-sell">
+          <h3 class="section-title">Offres reçues</h3>
+          <p class="text-muted">Aucune offre pour le moment.</p>
+        </section>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentificationStore } from '@/stores/authentification.store'
-import { propertyService } from '@/services/property.service'
-import type { PropertySummaryDto } from '@/types'
+import { useCustomProperties } from '@/stores/customProperties.store'
+import { generateMockProperties } from '@/utils/mockData'
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 
 const router = useRouter()
 const authStore = useAuthentificationStore()
+const { getAll: getCustomProperties } = useCustomProperties()
 
-const activeSection = ref('profile')
-const myProperties = ref<PropertySummaryDto[]>([])
-const loading = ref(false)
-
-const navItems = [
+const agentNavItems = [
   { id: 'profile', label: 'Profil' },
-  { id: 'properties', label: 'Mes biens' },
-  { id: 'requests', label: 'Demandes clients' },
-  { id: 'offers', label: 'Offres' },
+  { id: 'wishlist', label: 'Mes biens' },
 ]
 
-onMounted(async () => {
-  if (authStore.user?.role === 'Agent') {
-    loading.value = true
-    try {
-      myProperties.value = await propertyService.getAll()
-    } catch {
-      myProperties.value = []
-    } finally {
-      loading.value = false
-    }
+const agentNavItemsBottom = [
+  { id: 'offers', label: 'Demandes clients' },
+  { id: 'sell', label: 'Offres reçues' },
+]
+
+const activeSection = ref('profile')
+const mobileNavOpen = ref(false)
+const loading = ref(false)
+
+const statusMessage = computed(() => {
+  const labels: Record<string, string> = {
+    profile: 'Profil affiché',
+    wishlist: 'Mes biens affichés',
+    offers: 'Demandes clients affichées',
+    sell: 'Offres reçues affichées',
+  }
+  return labels[activeSection.value] || ''
+})
+
+const roleLabel = computed(() => {
+  switch (authStore.user?.role) {
+    case 'Agent': return 'Agent immobilier'
+    case 'Admin': return 'Administrateur'
+    default: return 'Agent'
   }
 })
+
+const avatarLetter = computed(() => (authStore.user?.username ?? 'A').charAt(0).toUpperCase())
+
+const properties = computed(() => {
+  const custom = getCustomProperties()
+  const mock = generateMockProperties(400)
+  const agentId = authStore.user?.contactId
+  const agentName = authStore.user?.username
+  const all = [...custom, ...mock]
+  return all.filter(p => {
+    if (agentId && p.agentId === agentId) return true
+    if (agentName && (p.agentName === agentName || p.agentName?.includes(agentName))) return true
+    return false
+  })
+})
+
+function switchSection(id: string) {
+  activeSection.value = id
+  mobileNavOpen.value = false
+}
 
 function handleLogout() {
   authStore.logout()
   router.push('/')
 }
 
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
+function formatPrice(val: number): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val || 0)
 }
 </script>
 
 <style scoped>
-.dashboard {
-  display: flex;
+.dash-wrapper {
+  background: #f8fafc;
   min-height: calc(100vh - 150px);
 }
 
-.sidebar {
-  width: 240px;
-  background: white;
-  border-right: 1px solid #e2e8f0;
-  padding: 1.5rem;
+.dash-container {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
-.sidebar-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #1e2956;
-  margin-bottom: 1rem;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
-}
-
-.nav-btn {
-  text-align: left;
-  padding: 0.625rem 0.875rem;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.nav-btn:hover {
-  background: #f1f5f9;
-  color: #1e2956;
-}
-
-.nav-btn.active {
+.mobile-nav-toggle {
+  display: none;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   background: #1e2956;
   color: white;
-  font-weight: 600;
-}
-
-.logout-btn {
-  margin-top: auto;
-  padding: 0.625rem;
-  border: 1px solid #e2e8f0;
-  background: white;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #dc2626;
+  border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(30,41,86,0.3);
+  transition: transform 0.15s;
 }
 
-.logout-btn:hover {
-  background: #fef2f2;
-  border-color: #fca5a5;
+.mobile-nav-toggle:hover {
+  transform: scale(1.08);
+}
+
+.mobile-nav-toggle:focus-visible {
+  outline: 2px solid #1e2956;
+  outline-offset: 4px;
 }
 
 .main {
   flex: 1;
   padding: 2rem;
-  background: #f8fafc;
+  overflow-y: auto;
+  min-width: 0;
 }
 
 .section-card {
@@ -183,13 +201,17 @@ function formatPrice(price: number): string {
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
+  max-width: 920px;
+  margin: 0 auto;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .section-title {
@@ -200,14 +222,17 @@ function formatPrice(price: number): string {
 }
 
 .btn-sm {
-  padding: 0.375rem 0.875rem;
+  padding: 0.5rem 1rem;
   background: #1e2956;
   color: white;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
   transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .btn-sm:hover {
@@ -216,6 +241,39 @@ function formatPrice(price: number): string {
 
 .text-muted {
   color: #94a3b8;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1e2956;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  font-size: 1.1rem;
+  color: #1e2956;
+  margin: 0;
+}
+
+.profile-role {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0.125rem 0 0;
 }
 
 .property-list {
@@ -232,12 +290,14 @@ function formatPrice(price: number): string {
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+  gap: 0.75rem;
 }
 
 .prop-info {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+  min-width: 0;
 }
 
 .prop-meta {
@@ -252,5 +312,38 @@ function formatPrice(price: number): string {
   color: #4338ca;
   padding: 0.25rem 0.625rem;
   border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .mobile-nav-toggle {
+    display: flex;
+  }
+
+  .main {
+    padding: 1.25rem 1rem;
+  }
+
+  .section-card {
+    padding: 1.25rem;
+  }
+
+  .profile-info {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 </style>

@@ -50,6 +50,11 @@ defineEmits(['click'])
   background: #f1f3f4;
 }
 
+.google-btn:focus-visible {
+  outline: 2px solid var(--color-secondary, #004ecc);
+  outline-offset: 2px;
+}
+
 .google-btn:disabled {
   opacity: 0.6;
   cursor: default;

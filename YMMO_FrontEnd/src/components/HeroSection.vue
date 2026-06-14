@@ -1,6 +1,6 @@
 ﻿<template>
-  <section class="...">
-    <SearchBar @search="handleSearch" class="mt-8 max-w-3xl mx-auto" />
+  <section class="hero-search">
+    <SearchBar @search="handleSearch" />
   </section>
 </template>
 
@@ -11,3 +11,15 @@ const handleSearch = (filters) => {
   console.log("Recherche lancée avec :", filters);
 };
 </script>
+
+<style scoped>
+.hero-search {
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 767px) {
+  .hero-search {
+    padding: 1rem 0.5rem;
+  }
+}
+</style>

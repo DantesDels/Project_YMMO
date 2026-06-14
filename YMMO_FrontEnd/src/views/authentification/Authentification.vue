@@ -57,6 +57,13 @@
 
       <GoogleSignInButton v-if="activeTab === 'login'" :loading="authStore.isLoading" @click="handleGoogleLogin" />
 
+      <div v-if="activeTab === 'login' && isDebugMode" class="debug-section">
+        <span class="debug-label">DEV ONLY</span>
+        <button class="debug-btn" :disabled="authStore.isLoading" @click="handleDebugAgentLogin">
+          Connexion Agent Debug
+        </button>
+      </div>
+
       <AuthentificationForm
         v-if="activeTab === 'register'"
         title="Créez votre compte"
@@ -119,7 +126,7 @@
               v-model="form.phoneNumber"
               type="tel"
               class="input"
-              placeholder="06 12 34 56 78"
+              placeholder="+33612345678"
               required
             />
           </div>
@@ -135,7 +142,6 @@
               minlength="8"
               autocomplete="new-password"
             />
-            <p class="password-hint">Astuce : majuscule + chiffre + symbole (ex: @, #, $) renforce la sécurité.</p>
           </div>
           <div>
             <label class="label" for="reg-password-confirm">Confirmer le mot de passe</label>
@@ -152,6 +158,7 @@
               @input="clearPasswordError"
             />
             <p v-if="passwordError" class="field-error">Les mots de passe ne correspondent pas.</p>
+            <p class="password-hint">Astuce : majuscule + chiffre + symbole (ex: @, #, $) renforce la sécurité.</p>
           </div>
         </template>
         <template #footer>
@@ -178,6 +185,8 @@ import { useAuthentificationStore } from '@/stores/authentification.store'
 import AuthentificationForm from '@/components/AuthentificationForm.vue'
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton.vue'
 import type { LoginRequest, RegisterRequest } from '@/types'
+const isDebugMode = false // Mettre à false pour masquer le debug en production
+
 
 const router = useRouter()
 const authStore = useAuthentificationStore()
@@ -199,6 +208,13 @@ async function handleLogin(form: Record<string, any>) {
   await authStore.login(credentials)
   if (!authStore.error && authStore.user) {
     router.push(redirectPath.value)
+  }
+}
+
+async function handleDebugAgentLogin() {
+  await authStore.debugAgentLogin()
+  if (!authStore.error && authStore.user) {
+    router.push('/agent/dashboard')
   }
 }
 
@@ -380,5 +396,52 @@ async function handleRegister(form: Record<string, any>) {
   background: #fef2f2;
   padding: 0.625rem;
   border-radius: 8px;
+}
+
+.debug-section {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.debug-label {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #f59e0b;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+}
+
+.debug-btn {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px dashed #fbbf24;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 0.3rem;
+}
+
+.debug-btn:hover:not(:disabled) {
+  background: #fef3c7;
+}
+
+.debug-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .row { flex-direction: column; gap: 0; }
+  .auth-wrapper { padding: 1.5rem 0.75rem; }
 }
 </style>

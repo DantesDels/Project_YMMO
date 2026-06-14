@@ -1,17 +1,43 @@
 ﻿<template>
   <section class="section-wrapper bg-white">
-    <h2 class="section-title text-center">
-      Trouvez votre bien dans l'une de ces villes
-    </h2>
-
-    <div class="property-grid-cities">
-      <div
-        v-for="city in cities"
-        :key="city"
-        class="city-card"
-        @click="goToCity(city)"
+    <button
+      class="toggle-header"
+      @click="toggle"
+      :aria-expanded="isOpen"
+      aria-controls="city-grid-panel"
+    >
+      <h2 class="section-title">
+        Trouvez votre bien dans l'une de ces villes
+      </h2>
+      <svg
+        class="chevron"
+        :class="{ open: isOpen }"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
       >
-        <img
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+
+    <Transition name="city-toggle">
+      <div v-if="isOpen" id="city-grid-panel" class="property-grid-cities">
+        <div
+          v-for="city in cities"
+          :key="city"
+          class="city-card"
+          role="button"
+          tabindex="0"
+          :aria-label="`Voir les annonces à ${city}`"
+          @click="goToCity(city)"
+          @keydown.enter="goToCity(city)"
+          @keydown.space.prevent="goToCity(city)"
+        >
+          <img
             :src="getCityImageUrl(city)"
             :alt="city"
             class="city-img"
@@ -19,22 +45,27 @@
             width="281"
             height="128"
             @error="handleImageError"
-        />
-        <div class="city-overlay">
-          <span class="city-name">{{ city }}</span>
+          />
+          <div class="city-overlay">
+            <span class="city-name">{{ city }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </section>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCityImageUrl } from '../utils/imageLoader';
 
 const router = useRouter()
+const isOpen = ref(true)
 
 const cities = ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Montpellier', 'Strasbourg', 'Bordeaux', 'Lille', 'Rennes', 'Reims', 'Le Havre', 'Saint-Étienne', 'Toulon']
+
+function toggle() { isOpen.value = !isOpen.value }
 
 const handleImageError = (event) => {
   event.target.src = '/images/ui/default-city.webp'
@@ -50,9 +81,32 @@ const goToCity = (city) => {
   padding: 2rem 0;
 }
 
+.toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+}
+
 .section-title {
-  margin-bottom: 2rem;
+  margin: 0;
   color: #1e2956;
+}
+
+.chevron {
+  color: #94a3b8;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
 }
 
 .property-grid-cities {
@@ -61,7 +115,7 @@ const goToCity = (city) => {
   justify-content: center;
   gap: 1rem;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 1.5rem auto 0;
   padding: 0 1rem;
 }
 
@@ -70,6 +124,7 @@ const goToCity = (city) => {
   height: 128px;
   width: calc(20% - 0.8rem);
   min-width: 150px;
+  max-width: 100%;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
@@ -77,6 +132,19 @@ const goToCity = (city) => {
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+}
+
+@media (max-width: 480px) {
+  .city-card { height: 100px; min-width: 130px; }
+}
+
+@media (max-width: 360px) {
+  .city-card { height: 90px; min-width: 110px; }
+}
+
+.city-card:focus-visible {
+  outline: 2px solid var(--color-secondary, #004ecc);
+  outline-offset: 2px;
 }
 
 .city-card:hover {
@@ -117,5 +185,23 @@ const goToCity = (city) => {
   background: rgba(30, 41, 86, 0.9);
   transform: scale(1.05);
   box-shadow: 3px 4px 12px rgba(30, 41, 86, 0.6);
+}
+
+.city-toggle-enter-active,
+.city-toggle-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.city-toggle-enter-from,
+.city-toggle-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+}
+
+.city-toggle-enter-to,
+.city-toggle-leave-from {
+  opacity: 1;
 }
 </style>

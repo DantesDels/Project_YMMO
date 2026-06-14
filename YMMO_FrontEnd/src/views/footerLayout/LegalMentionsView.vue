@@ -21,7 +21,13 @@ import LegalLayout from '@/layouts/LegalLayout.vue';
 </script>
 
 <style scoped>
-h1 { color: #1e2956; margin-bottom: 0.5rem; }
+h1 {
+  color: #1e2956;
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 h2 { color: #10b981; margin-top: 2rem; margin-bottom: 1rem; }
 p { color: #475569; line-height: 1.7; }
 .updated { font-size: 0.9rem; color: #94a3b8; margin-bottom: 2rem; }

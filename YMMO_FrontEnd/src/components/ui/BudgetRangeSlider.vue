@@ -355,6 +355,7 @@ function formatCompact(val) {
 
 .popover--budget {
   width: 340px;
+  max-width: calc(100vw - 3rem);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;

@@ -10,19 +10,24 @@
       </div>
 
       <div class="detail-layout">
-        <div class="gallery-section">
+        <div class="gallery-section" role="region" aria-label="Galerie photos" tabindex="-1" ref="galleryRef" @keydown.left="prevPhoto" @keydown.right="nextPhoto">
           <div class="main-image">
             <img :src="currentImage" :alt="property.title" />
             <button v-if="property.pictures?.length > 1" class="chevron chevron-left" @click="prevPhoto" aria-label="Photo précédente">‹</button>
             <button v-if="property.pictures?.length > 1" class="chevron chevron-right" @click="nextPhoto" aria-label="Photo suivante">›</button>
-            <span v-if="property.pictures?.length > 1" class="photo-counter">{{ activeImage + 1 }} / {{ property.pictures.length }}</span>
+            <span v-if="property.pictures?.length > 1" class="photo-counter" aria-live="polite">{{ activeImage + 1 }} / {{ property.pictures.length }}</span>
           </div>
-          <div class="thumbnails" v-if="property.pictures?.length > 1">
+          <div class="thumbnails" v-if="property.pictures?.length > 1" role="tablist" aria-label="Sélection de photos">
             <button
               v-for="(pic, i) in property.pictures"
               :key="i"
               :class="['thumb', { active: activeImage === i }]"
+              :aria-label="`Photo ${i + 1}`"
+              :aria-selected="activeImage === i"
+              role="tab"
               @click="activeImage = i"
+              @keydown.enter="activeImage = i"
+              @keydown.space.prevent="activeImage = i"
             >
               <img :src="pic.url" :alt="`Photo ${i + 1}`" />
             </button>
@@ -112,15 +117,15 @@
               <strong>{{ agent.name }}</strong>
               <span>{{ agent.agencyName }}</span>
             </div>
-            <button class="contact-btn" @click="showContactPopup = true">Contacter</button>
+            <button class="contact-btn" ref="contactBtnRef" @click="showContactPopup = true">Contacter</button>
           </div>
         </div>
       </div>
 
       <Teleport to="body">
-        <div v-if="showContactPopup" class="popup-overlay" @click.self="showContactPopup = false">
+        <div v-if="showContactPopup" class="popup-overlay" role="dialog" aria-modal="true" aria-label="Contacter l'agent" tabindex="-1" @click.self="closePopup" @keydown.escape="closePopup" @keydown.tab="trapFocus">
           <div class="popup-card">
-            <button class="popup-close" @click="showContactPopup = false">×</button>
+            <button class="popup-close" @click="closePopup" ref="popupCloseBtn" aria-label="Fermer">×</button>
             <h3>Contacter l'agent</h3>
 
             <div class="popup-agent">
@@ -157,10 +162,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { getMockAgentById } from '@/utils/mockData'
 import { useRoute } from 'vue-router'
 import { getMockPropertyById } from '@/utils/mockData'
+import { useCustomProperties } from '@/stores/customProperties.store'
 import { useWishlistStore } from '@/stores/wishlist.store'
 
 const route = useRoute()
@@ -169,11 +175,43 @@ const property = ref(null)
 const loading = ref(true)
 const activeImage = ref(0)
 const showContactPopup = ref(false)
+const popupCloseBtn = ref<HTMLButtonElement | null>(null)
+const contactBtnRef = ref<HTMLButtonElement | null>(null)
+const galleryRef = ref<HTMLDivElement | null>(null)
+
+watch(showContactPopup, (val) => {
+  if (val) {
+    nextTick(() => popupCloseBtn.value?.focus())
+  } else {
+    // Return focus to the contact button when popup closes
+    nextTick(() => contactBtnRef.value?.focus())
+  }
+})
 
 const isFav = computed(() => property.value ? wishlist.isFavorite(property.value.id) : false)
 
 function toggleFav() {
   if (property.value) wishlist.toggleFavorite(property.value.id)
+}
+
+function closePopup() {
+  showContactPopup.value = false
+  nextTick(() => contactBtnRef.value?.focus())
+}
+
+function trapFocus(e) {
+  const popup = e.currentTarget
+  const focusable = popup.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  if (focusable.length === 0) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
 }
 
 const agent = computed(() => {
@@ -243,7 +281,7 @@ const translateCondition = (key) => CONDITION_LABELS[key] || key
 
 onMounted(() => {
   const id = route.params.id
-  property.value = getMockPropertyById(id)
+  property.value = getMockPropertyById(id) || useCustomProperties().getById(id) || null
   loading.value = false
 })
 </script>
@@ -251,6 +289,7 @@ onMounted(() => {
 <style scoped>
 .detail-page {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
 }
@@ -291,6 +330,24 @@ onMounted(() => {
 
 @media (max-width: 900px) {
   .detail-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 767px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .price { font-size: clamp(1.15rem, 4vw, 1.5rem); }
+  .thumbnails { gap: 0.35rem; }
+  .thumb { width: 56px; height: 42px; }
+  .agent-card { flex-wrap: wrap; gap: 0.75rem; }
+  .contact-btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .detail-page { padding: 0.75rem 0.5rem 1.5rem; }
+  .back-bar { margin-bottom: 0.5rem; }
+  .back-btn { font-size: 0.8rem; padding: 0.4rem 0.75rem; }
+  .main-image { border-radius: 12px; }
+  .popup-card { padding: 1.5rem 1rem; }
+  .popup-label { min-width: 60px; font-size: 0.7rem; }
 }
 
 .gallery-section {
@@ -357,6 +414,7 @@ onMounted(() => {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .thumb {
@@ -370,6 +428,7 @@ onMounted(() => {
   padding: 0;
   background: #f1f5f9;
   transition: border-color 0.15s;
+  max-width: 100%;
 }
 
 .thumb.active {
@@ -386,10 +445,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  max-width: 100%;
 }
 
 .info-header h1 {
-  font-size: 1.75rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: 800;
   color: #1e2956;
   margin: 0 0 0.25rem;
@@ -726,6 +786,8 @@ onMounted(() => {
   font-weight: 600;
   text-decoration: none;
   font-size: 0.9rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .popup-row a:hover { text-decoration: underline; }

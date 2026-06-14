@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div v-if="errorToast" class="toast-error toast-sticky" role="alert">{{ errorToast }}</div>
     <div class="section-header">
       <h3 class="section-title">Mon profil</h3>
       <button v-if="!editing" class="btn-edit" @click="startEditing">Modifier</button>
@@ -36,8 +37,9 @@
         </div>
         <div class="form-group">
           <label for="pf-phone">Téléphone</label>
-          <input id="pf-phone" v-model="form.phone" :disabled="!editing" placeholder="+33612345678" aria-describedby="pf-phone-hint" />
+          <input id="pf-phone" v-model="form.phone" :disabled="!editing" placeholder="+33612345678" aria-describedby="pf-phone-hint" :class="{ 'input-invalid': phoneError }" @input="clearPhoneError" @blur="validatePhone" />
           <p id="pf-phone-hint" class="input-hint">Format international : +33 suivi de votre numéro (ex: +33612345678)</p>
+          <p v-if="phoneError" class="field-error" role="alert">{{ phoneError }}</p>
         </div>
       </div>
       <div class="form-row form-row-full">
@@ -62,7 +64,6 @@
       </div>
     </div>
 
-    <div v-if="errorToast" class="toast-error" role="alert">{{ errorToast }}</div>
     <div v-if="saved" class="toast-success" role="status">Profil mis à jour avec succès.</div>
   </div>
 </template>
@@ -136,15 +137,32 @@ function cancelEditing() {
 
 const PHONE_REGEX = /^\+[1-9]\d{1,14}$/
 const errorToast = ref('')
+const phoneError = ref('')
+
+const PHONE_HINT = 'Le numéro de téléphone doit être au format international (+33…). Exemple : +33612345678'
 
 function showErrorToast(msg: string) {
   errorToast.value = msg
   setTimeout(() => { errorToast.value = '' }, 4000)
 }
 
+function clearPhoneError() {
+  phoneError.value = ''
+}
+
+function validatePhone(): boolean {
+  if (!form.phone) return true
+  if (!PHONE_REGEX.test(form.phone)) {
+    phoneError.value = PHONE_HINT
+    return false
+  }
+  phoneError.value = ''
+  return true
+}
+
 async function saveProfile() {
-  if (form.phone && !PHONE_REGEX.test(form.phone)) {
-    showErrorToast('Le numéro de téléphone doit être au format international (+33…). Exemple : +33612345678')
+  if (!validatePhone()) {
+    showErrorToast(PHONE_HINT)
     return
   }
   saving.value = true
@@ -372,6 +390,27 @@ async function saveProfile() {
   color: #94a3b8;
   margin: 0.25rem 0 0 0;
   line-height: 1.4;
+}
+
+.input-invalid {
+  border-color: #dc2626 !important;
+}
+.input-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+.field-error {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toast-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .toast-success, .toast-error {
