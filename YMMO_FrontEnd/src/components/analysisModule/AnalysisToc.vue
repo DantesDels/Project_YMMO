@@ -15,15 +15,44 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
 const props = defineProps<{
   sections: { id: string; title: string; expanded: boolean }[]
-  activeId?: string
 }>()
 
+const emit = defineEmits<{ (e: 'update:activeId', id: string): void }>()
+const activeId = ref('')
+
 function scrollTo(id: string) {
+  emit('update:activeId', id)
+  activeId.value = id
   const el = document.getElementById(id)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
+
+let ticking = false
+function onScroll() {
+  if (ticking) return
+  ticking = true
+  requestAnimationFrame(() => {
+    const mid = window.innerHeight / 3
+    let best: string | null = null
+    let bestDist = Infinity
+    for (const s of props.sections) {
+      const el = document.getElementById(s.id)
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      const dist = Math.abs(rect.top - mid)
+      if (dist < bestDist) { bestDist = dist; best = s.id }
+    }
+    if (best && best !== activeId.value) { activeId.value = best; emit('update:activeId', best) }
+    ticking = false
+  })
+}
+
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>

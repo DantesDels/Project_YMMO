@@ -11,7 +11,7 @@
       @logout="handleLogout"
     />
 
-    <AnalysisToc :sections="sections" :activeId="activeSection" />
+    <AnalysisToc :sections="sections" @update:activeId="activeSection = $event" />
 
     <div class="ama-content">
       <div class="ama-toolbar">
@@ -133,7 +133,7 @@ const activeSection = ref('sec-overview')
 
 function onToggle(id: string) {
   const s = sections.find(x => x.id === id)
-  if (s) { s.expanded = !s.expanded; activeSection.value = id }
+  if (s) s.expanded = !s.expanded
 }
 
 const propertyTypes = ['House', 'Apartment', 'Land', 'Commercial', 'Office', 'Garage', 'Parking']
