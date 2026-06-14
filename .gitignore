@@ -1,0 +1,24 @@
+# IDE
+.idea/
+.vs/
+.vscode/
+*.user
+*.DotSettings.user
+
+# Build
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+# Dependencies
+node_modules/
+.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+.Docs/

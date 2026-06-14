@@ -47,15 +47,34 @@
             <router-link to="/portfolio/new" class="btn-sm">+ Ajouter un bien</router-link>
           </div>
           <div v-if="loading" class="text-muted">Chargement...</div>
-          <div v-else-if="properties.length === 0" class="text-muted">Aucun bien pour le moment.</div>
+          <div v-else-if="customAgentProperties.length === 0 && mockAgentProperties.length === 0" class="text-muted">Aucun bien pour le moment.</div>
           <div v-else class="property-list">
-            <div v-for="p in properties" :key="p.id" class="property-row">
-              <div class="prop-info">
-                <strong>{{ p.title || p.propertyName }}</strong>
-                <span class="prop-meta">{{ p.city || (p.address || '').replace(/\(.*\)/, '').trim() }} — {{ formatPrice(p.price || p.currentPrice) }}</span>
+            <router-link v-for="p in customAgentProperties" :key="p.id" :to="`/property/${p.id}`" custom v-slot="{ navigate }">
+              <div class="property-row clickable" @click="navigate" @keydown.enter="navigate" role="link" tabindex="0">
+                <div class="prop-info">
+                  <strong>{{ p.title }}</strong>
+                  <span class="prop-meta">{{ (p.address || '').replace(/\(.*\)/, '').trim() }} — {{ formatPrice(p.price) }}</span>
+                </div>
+                <div class="prop-actions">
+                  <span class="badge-custom">Créé</span>
+                  <router-link :to="`/portfolio/edit/${p.id}`" class="btn-edit" @click.stop>Modifier</router-link>
+                  <button v-if="deleteConfirmId !== p.id" class="btn-delete" @click.stop="confirmDelete(p.id)" aria-label="Supprimer ce bien">Supprimer</button>
+                  <span v-else class="confirm-group">
+                    <button class="btn-confirm-yes" @click.stop="executeDelete(p.id)" aria-label="Confirmer la suppression">Oui</button>
+                    <button class="btn-confirm-no" @click.stop="cancelDelete()" aria-label="Annuler">Non</button>
+                  </span>
+                </div>
               </div>
-              <span class="badge-type">{{ p.type || p.propertyType }}</span>
-            </div>
+            </router-link>
+            <router-link v-for="p in mockAgentProperties" :key="p.id" :to="`/property/${p.id}`" custom v-slot="{ navigate }">
+              <div class="property-row clickable" @click="navigate" @keydown.enter="navigate" role="link" tabindex="0">
+                <div class="prop-info">
+                  <strong>{{ p.title }}</strong>
+                  <span class="prop-meta">{{ (p.address || '').replace(/\(.*\)/, '').trim() }} — {{ formatPrice(p.price) }}</span>
+                </div>
+                <span class="badge-type">{{ p.type }}</span>
+              </div>
+            </router-link>
           </div>
         </section>
 
@@ -85,7 +104,7 @@ import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 
 const router = useRouter()
 const authStore = useAuthentificationStore()
-const { getAll: getCustomProperties } = useCustomProperties()
+const { getAll: getCustomProperties, removeProperty: removeCustomProperty } = useCustomProperties()
 
 const agentNavItems = [
   { id: 'profile', label: 'Profil' },
@@ -121,18 +140,42 @@ const roleLabel = computed(() => {
 
 const avatarLetter = computed(() => (authStore.user?.username ?? 'A').charAt(0).toUpperCase())
 
-const properties = computed(() => {
-  const custom = getCustomProperties()
-  const mock = generateMockProperties(400)
+const deleteConfirmId = ref<string | null>(null)
+
+const customAgentProperties = computed(() => {
+  const all = getCustomProperties()
   const agentId = authStore.user?.contactId
   const agentName = authStore.user?.username
-  const all = [...custom, ...mock]
   return all.filter(p => {
     if (agentId && p.agentId === agentId) return true
     if (agentName && (p.agentName === agentName || p.agentName?.includes(agentName))) return true
     return false
   })
 })
+
+const mockAgentProperties = computed(() => {
+  const all = generateMockProperties(400)
+  const agentId = authStore.user?.contactId
+  const agentName = authStore.user?.username
+  return all.filter(p => {
+    if (agentId && p.agentId === agentId) return true
+    if (agentName && (p.agentName === agentName || p.agentName?.includes(agentName))) return true
+    return false
+  })
+})
+
+function confirmDelete(id: string) {
+  deleteConfirmId.value = id
+}
+
+function cancelDelete() {
+  deleteConfirmId.value = null
+}
+
+function executeDelete(id: string) {
+  removeCustomProperty(id)
+  deleteConfirmId.value = null
+}
 
 function switchSection(id: string) {
   activeSection.value = id
@@ -282,6 +325,20 @@ function formatPrice(val: number): string {
   gap: 0.5rem;
 }
 
+.property-row.clickable {
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+.property-row.clickable:hover {
+  border-color: #1e2956;
+  background: #eef2ff;
+}
+.property-row.clickable:focus-visible {
+  outline: 2px solid #1e2956;
+  outline-offset: 2px;
+}
 .property-row {
   display: flex;
   justify-content: space-between;
@@ -314,6 +371,89 @@ function formatPrice(val: number): string {
   border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.prop-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.badge-custom {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.btn-edit {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.625rem;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btn-edit:hover {
+  background: #e0e7ff;
+}
+.btn-delete {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.625rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.btn-delete:hover {
+  background: #fee2e2;
+}
+
+.confirm-group {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.btn-confirm-yes {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.625rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.btn-confirm-yes:hover {
+  background: #b91c1c;
+}
+
+.btn-confirm-no {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.625rem;
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-confirm-no:hover {
+  background: #cbd5e1;
 }
 
 .sr-only {

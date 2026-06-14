@@ -100,6 +100,44 @@
     </fieldset>
 
     <fieldset class="fieldset">
+      <legend class="legend">Photos</legend>
+      <div class="field">
+        <label class="label" for="prop-photos-url">Ajouter une URL d'image</label>
+        <div class="photo-url-row">
+          <input id="prop-photos-url" v-model="photoUrlInput" type="url" class="input" placeholder="https://..." @keydown.enter.prevent="addPhotoUrl" />
+          <button type="button" class="btn-add-url" @click="addPhotoUrl" :disabled="!photoUrlInput">+</button>
+        </div>
+      </div>
+      <div
+        class="drop-zone"
+        :class="{ 'drop-zone--active': dropActive }"
+        @dragenter.prevent="dropActive = true"
+        @dragover.prevent="dropActive = true"
+        @dragleave.prevent="dropActive = false"
+        @drop.prevent="onDrop"
+        @click="fileInputRef?.click()"
+        role="button"
+        tabindex="0"
+        aria-label="Cliquez ou déposez des images ici"
+        @keydown.enter.prevent="fileInputRef?.click()"
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span>Cliquez ou déposez vos images ici</span>
+      </div>
+      <input ref="fileInputRef" type="file" accept="image/*" multiple hidden @change="onFileChange" />
+      <div v-if="form.photos.length > 0" class="photo-previews">
+        <div v-for="(url, idx) in form.photos" :key="idx" class="photo-preview">
+          <img :src="url" alt="" loading="lazy" />
+          <button type="button" class="btn-remove-photo" @click="removePhoto(idx)" aria-label="Supprimer cette photo">&times;</button>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset">
       <legend class="legend">Extérieurs et Annexes</legend>
       <div class="checkbox-grid">
         <label v-for="c in criteriaGroups.exterieur" :key="c.value" class="checkbox-label">
@@ -146,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import { Criteria } from '@/types'
 
 const props = withDefaults(defineProps<{
@@ -164,6 +202,7 @@ const props = withDefaults(defineProps<{
     rooms: number
     furnishing: string
     features: string[]
+    photos: string[]
     location: Partial<{
       street: string
       city: string
@@ -254,6 +293,10 @@ const criteriaGroups = {
   ],
 }
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const photoUrlInput = ref('')
+const dropActive = ref(false)
+
 const form = reactive({
   propertyName: props.initialData?.propertyName ?? '',
   propertyDescription: props.initialData?.propertyDescription ?? '',
@@ -266,6 +309,7 @@ const form = reactive({
   rooms: props.initialData?.rooms ?? 1,
   furnishing: props.initialData?.furnishing ?? '',
   features: props.initialData?.features ?? ([] as string[]),
+  photos: props.initialData?.photos ?? ([] as string[]),
   location: reactive({
     street: props.initialData?.location?.street ?? '',
     city: props.initialData?.location?.city ?? '',
@@ -281,6 +325,41 @@ function toggleCriteria(value: string) {
   else form.features.push(value)
 }
 
+function addPhotoUrl() {
+  const url = photoUrlInput.value.trim()
+  if (url && !form.photos.includes(url)) {
+    form.photos.push(url)
+  }
+  photoUrlInput.value = ''
+}
+
+function addFiles(fileList: FileList) {
+  for (const file of Array.from(fileList)) {
+    if (file.type.startsWith('image/')) {
+      form.photos.push(URL.createObjectURL(file))
+    }
+  }
+}
+
+function onFileChange(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  if (!files) return
+  addFiles(files)
+  if (fileInputRef.value) fileInputRef.value.value = ''
+}
+
+function onDrop(e: DragEvent) {
+  dropActive.value = false
+  const files = e.dataTransfer?.files
+  if (files && files.length > 0) addFiles(files)
+}
+
+function removePhoto(idx: number) {
+  const removed = form.photos[idx]
+  if (removed?.startsWith('blob:')) URL.revokeObjectURL(removed)
+  form.photos.splice(idx, 1)
+}
+
 function handleSubmit() {
   emit('submit', {
     propertyName: form.propertyName,
@@ -294,6 +373,7 @@ function handleSubmit() {
     rooms: form.rooms,
     furnishing: form.furnishing,
     features: form.features,
+    photos: [...form.photos],
     location: { ...form.location },
   })
 }
@@ -413,6 +493,97 @@ function handleSubmit() {
 .btn-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.drop-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.drop-zone:hover {
+  border-color: #1e2956;
+  background: #f8fafc;
+}
+.drop-zone--active {
+  border-color: #1e2956;
+  background: #eef2ff;
+  color: #1e2956;
+}
+.drop-zone:focus-visible {
+  outline: 2px solid #1e2956;
+  outline-offset: 2px;
+}
+
+.photo-url-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.photo-url-row .input {
+  flex: 1;
+}
+.btn-add-url {
+  padding: 0.5rem 1rem;
+  background: #1e2956;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-add-url:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.photo-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.photo-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.btn-remove-photo {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-remove-photo:hover {
+  background: rgba(220,38,38,0.85);
 }
 
 select.input {

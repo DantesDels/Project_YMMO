@@ -67,6 +67,12 @@ const router = createRouter({
                     component: () => import('@/views/agent/PropertyFormView.vue'),
                     meta: { requiresAuthentification: true, requiredRole: 'Agent' },
                 },
+                {
+                    path: 'portfolio/edit/:id',
+                    name: 'agent-property-edit',
+                    component: () => import('@/views/agent/PropertyFormView.vue'),
+                    meta: { requiresAuthentification: true, requiredRole: 'Agent' },
+                },
 
                 // ── Fallback 404 ──
                 {

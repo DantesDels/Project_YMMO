@@ -29,7 +29,7 @@ const customProperties = ref<CustomProperty[]>([])
 
 export function useCustomProperties() {
   function addProperty(p: CustomProperty) {
-    customProperties.value.push(p)
+    customProperties.value = [...customProperties.value, p]
   }
 
   function getAll(): CustomProperty[] {
@@ -40,5 +40,15 @@ export function useCustomProperties() {
     return customProperties.value.find(p => p.id === id)
   }
 
-  return { customProperties, addProperty, getAll, getById }
+  function removeProperty(id: string): void {
+    customProperties.value = customProperties.value.filter(p => p.id !== id)
+  }
+
+  function updateProperty(id: string, data: Partial<CustomProperty>): void {
+    customProperties.value = customProperties.value.map(p =>
+      p.id === id ? { ...p, ...data } : p
+    )
+  }
+
+  return { customProperties, addProperty, getAll, getById, removeProperty, updateProperty }
 }
