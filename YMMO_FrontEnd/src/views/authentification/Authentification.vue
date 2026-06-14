@@ -185,7 +185,7 @@ import { useAuthentificationStore } from '@/stores/authentification.store'
 import AuthentificationForm from '@/components/AuthentificationForm.vue'
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton.vue'
 import type { LoginRequest, RegisterRequest } from '@/types'
-const isDebugMode = false // Mettre à false pour masquer le debug en production
+const isDebugMode = true // Mettre à false pour masquer le debug en production
 
 
 const router = useRouter()
