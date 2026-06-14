@@ -54,6 +54,19 @@ const router = createRouter({
                     meta: { requiresAuthentification: true },
                 },
 
+                // ── Market Analysis ──
+                {
+                    path: 'market-analysis',
+                    name: 'market-analysis',
+                    component: () => import('@/views/headerLayout/MarketAnalysisView.vue'),
+                },
+                {
+                    path: 'agent/market-analysis-agent',
+                    name: 'agent-market-analysis',
+                    component: () => import('@/views/agent/AgentMarketAnalysisView.vue'),
+                    meta: { requiresAuthentification: true, requiredRole: 'Agent' },
+                },
+
                 // ── Agent ──
                 {
                     path: 'agent/dashboard',

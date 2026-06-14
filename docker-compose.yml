@@ -37,6 +37,15 @@ services:
     ports:
       - "5000:8080"
 
+  datascience:
+    build:
+      context: YMMO_DataScience
+      dockerfile: Dockerfile
+    container_name: ymmo-datascience
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
   frontend:
     build:
       context: YMMO_FrontEnd
@@ -45,6 +54,7 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+      - datascience
     ports:
       - "8080:80"
 

@@ -10,6 +10,7 @@
         <HamburgerMenu v-slot="{ close }">
           <AppButton to="/catalog" @click="close">Catalogue</AppButton>
           <AppButton to="/informations" @click="close">À propos</AppButton>
+          <AppButton to="/market-analysis" @click="close">Analyse marché</AppButton>
           <hr class="mobile-divider" />
           <template v-if="isAuthenticated">
             <router-link v-if="isAgent" to="/agent/dashboard" class="mobile-item" @click="close">
@@ -51,6 +52,7 @@
         <nav class="nav-links" aria-label="Navigation principale">
           <AppButton to="/catalog">Catalogue</AppButton>
           <AppButton to="/informations">À propos</AppButton>
+          <AppButton to="/market-analysis">Analyse marché</AppButton>
 
           <span class="nav-sep" aria-hidden="true">|</span>
 
@@ -127,6 +129,17 @@
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Ajouter un bien
+                  </router-link>
+                  <router-link
+                    v-if="isAgent"
+                    to="/agent/market-analysis-agent"
+                    class="dropdown-item"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="closeMenu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><path d="M21 15v4"/><path d="M19 17h4"/></svg>
+                    Analyse marché
                   </router-link>
                   <div class="dropdown-divider" role="separator"></div>
                   <button
