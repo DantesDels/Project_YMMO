@@ -510,27 +510,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   line-height: 1;
 }
 
-.fav-toast {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  translate: -50% 0;
-  background: #1e2956;
-  color: white;
-  padding: 0.65rem 1.5rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  z-index: 99999;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  animation: toast-in 0.25s ease-out;
-}
-
-@keyframes toast-in {
-  from { opacity: 0; translate: -50% 1rem; }
-  to   { opacity: 1; translate: -50% 0; }
-}
-
 .mobile-divider {
   border: none;
   border-top: 1px solid #e2e8f0;
@@ -583,5 +562,28 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 @media (max-width: 767px) {
   .nav-links { display: none; }
+}
+</style>
+
+<style>
+.fav-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  translate: -50% 0;
+  background: #1e2956;
+  color: white;
+  padding: 0.65rem 1.5rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 99999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  animation: toast-in 0.25s ease-out;
+  pointer-events: none;
+}
+@keyframes toast-in {
+  from { opacity: 0; translate: -50% 1rem; }
+  to   { opacity: 1; translate: -50% 0; }
 }
 </style>
