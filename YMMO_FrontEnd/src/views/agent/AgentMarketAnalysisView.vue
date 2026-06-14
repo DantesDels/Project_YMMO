@@ -37,7 +37,7 @@
           <button class="ama-apply-btn" @click="loadFullAnalysis">Appliquer</button>
         </section>
 
-        <AnalysisModule id="sec-overview" title="Aperçu du Marché" expanded @toggle="onToggle">
+        <AnalysisModule id="sec-overview" title="Aperçu du Marché" :expanded="sMap['sec-overview']" @toggle="onToggle">
           <MarketOverview :data="d.trends.summary" />
         </AnalysisModule>
 
@@ -112,16 +112,16 @@ const mobileNavOpen = ref(false)
 const d = ref<any>({})
 
 const MODULES = [
-  { id: 'sec-overview', title: 'Aperçu', expanded: true },
-  { id: 'sec-trends', title: 'Tendance des Prix', expanded: true },
-  { id: 'sec-types', title: 'Types', expanded: true },
-  { id: 'sec-avgprice', title: 'Prix / Type', expanded: true },
-  { id: 'sec-conditions', title: 'Conditions', expanded: true },
-  { id: 'sec-features', title: 'Caractéristiques', expanded: true },
-  { id: 'sec-distribution', title: 'Distribution Prix', expanded: true },
-  { id: 'sec-zones', title: 'Zones', expanded: true },
-  { id: 'sec-predictions', title: 'Prévisions IA', expanded: true },
-  { id: 'sec-forecast', title: 'Tendance / Type', expanded: true },
+  { id: 'sec-overview', title: 'Aperçu', expanded: false },
+  { id: 'sec-trends', title: 'Tendance des Prix', expanded: false },
+  { id: 'sec-types', title: 'Types', expanded: false },
+  { id: 'sec-avgprice', title: 'Prix / Type', expanded: false },
+  { id: 'sec-conditions', title: 'Conditions', expanded: false },
+  { id: 'sec-features', title: 'Caractéristiques', expanded: false },
+  { id: 'sec-distribution', title: 'Distribution Prix', expanded: false },
+  { id: 'sec-zones', title: 'Zones', expanded: false },
+  { id: 'sec-predictions', title: 'Prévisions IA', expanded: false },
+  { id: 'sec-forecast', title: 'Tendance / Type', expanded: false },
 ]
 const sections = reactive(MODULES)
 const sMap = computed(() => {
