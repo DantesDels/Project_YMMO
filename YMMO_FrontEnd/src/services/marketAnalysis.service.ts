@@ -1,284 +1,248 @@
-import { generateMockProperties } from '@/utils/mockData'
+const TOTAL = 2_000_000
 
-type Property = ReturnType<typeof generateMockProperties>[number]
+const CITIES = [
+  { name: 'Paris', mult: 2.5 }, { name: 'Marseille', mult: 1.3 }, { name: 'Lyon', mult: 1.8 },
+  { name: 'Toulouse', mult: 1.4 }, { name: 'Nice', mult: 1.9 }, { name: 'Nantes', mult: 1.3 },
+  { name: 'Montpellier', mult: 1.2 }, { name: 'Strasbourg', mult: 1.3 }, { name: 'Bordeaux', mult: 1.6 },
+  { name: 'Lille', mult: 1.2 }, { name: 'Rennes', mult: 1.2 }, { name: 'Reims', mult: 1.0 },
+  { name: 'Le Havre', mult: 0.9 }, { name: 'Saint-Étienne', mult: 0.7 }, { name: 'Toulon', mult: 1.1 },
+]
+const TYPES = ['House', 'Apartment', 'Land', 'Commercial', 'Office', 'Garage', 'Parking'] as const
+const CONDS = ['New', 'Excellent', 'Good', 'NeedsRefresh', 'NeedsRenovation', 'Ruin'] as const
+const FEATURES = ['Studio', 'Balcony', 'Terrace', 'Garden', 'Garage', 'Parking', 'Cellar', 'SwimmingPool', 'Elevator', 'AirConditioning', 'FiberOptic', 'SmartHome'] as const
+const BASE_PRICES: Record<string, number> = { House: 350000, Apartment: 250000, Land: 150000, Commercial: 400000, Office: 300000, Garage: 50000, Parking: 30000 }
+const START = new Date('2024-01-01').getTime()
+const END = new Date('2026-12-31').getTime()
+const RANGE = END - START
 
-function getProps(): Property[] {
-  return generateMockProperties(400)
+interface MPeriodAcc { sumPrice: number; sumSurface: number; count: number; min: number; max: number }
+
+interface Agg {
+  count: number; sumPrice: number; sumSurface: number; minPrice: number; maxPrice: number
+  cities: Set<string>
+  typeCounts: Record<string, number>; typeSumPrice: Record<string, number>; typeSumSurface: Record<string, number>
+  condCounts: Record<string, number>; featureCounts: Record<string, number>
+  cityMap: Map<string, { sumPrice: number; sumSurface: number; count: number }>
+  monthly: Record<string, MPeriodAcc>
+  typeMonthly: Record<string, Record<string, MPeriodAcc>>
+  cityMonthly: Record<string, Record<string, MPeriodAcc>>
+  priceHist: Record<string, number>
 }
 
-function avg(arr: number[]) {
-  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+function emptyAgg(): Agg {
+  return {
+    count: 0, sumPrice: 0, sumSurface: 0, minPrice: Infinity, maxPrice: -Infinity,
+    cities: new Set(), typeCounts: {}, typeSumPrice: {}, typeSumSurface: {},
+    condCounts: {}, featureCounts: {}, cityMap: new Map(),
+    monthly: {}, typeMonthly: {}, cityMonthly: {}, priceHist: {},
+  }
 }
 
-function round(v: number, d = 2) {
-  return Math.round(v * 10 ** d) / 10 ** d
+function rand(seed: number) {
+  const x = Math.sin(seed * 9301 + 49297) * 49297
+  return x - Math.floor(x)
+}
+
+function round(v: number, d = 2) { return Math.round(v * 10 ** d) / 10 ** d }
+
+function genOne(i: number) {
+  const s = i * 1.0
+  const cityIdx = Math.floor(rand(s + 1) * CITIES.length)
+  const cityObj = CITIES[cityIdx]
+  const typeIdx = Math.floor(rand(s + 2) * TYPES.length)
+  const type = TYPES[typeIdx]
+  const condIdx = Math.floor(rand(s + 3) * CONDS.length)
+  const condition = CONDS[condIdx]
+  const surface = Math.floor(rand(s + 4) * 200) + 20
+  const rooms = Math.max(1, Math.min(7, Math.floor(surface / 30) + Math.floor(rand(s + 5) * 4) - 1))
+  const price = Math.max(20000, Math.floor(BASE_PRICES[type] * cityObj.mult * (surface / 80) * (0.7 + rand(s + 6) * 0.6)))
+  const dateVal = START + Math.floor(rand(s + 7) * RANGE)
+  const dt = new Date(dateVal)
+  const monthKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+  return { type, condition, surface, rooms, price, monthKey, city: cityObj.name }
+}
+
+function aggregateLoop(filterType?: string, filterCity?: string): Agg {
+  const agg = emptyAgg()
+  for (let i = 0; i < TOTAL; i++) {
+    const p = genOne(i)
+    if (filterType && p.type !== filterType) continue
+    if (filterCity && p.city !== filterCity) continue
+    agg.count++; agg.sumPrice += p.price; agg.sumSurface += p.surface
+    if (p.price < agg.minPrice) agg.minPrice = p.price
+    if (p.price > agg.maxPrice) agg.maxPrice = p.price
+    agg.cities.add(p.city)
+    agg.typeCounts[p.type] = (agg.typeCounts[p.type] || 0) + 1
+    agg.typeSumPrice[p.type] = (agg.typeSumPrice[p.type] || 0) + p.price
+    agg.typeSumSurface[p.type] = (agg.typeSumSurface[p.type] || 0) + p.surface
+    agg.condCounts[p.condition] = (agg.condCounts[p.condition] || 0) + 1
+    const fSeed = Math.floor(rand(i + 8) * 100)
+    for (let f = 0; f < FEATURES.length; f++) {
+      if (fSeed + f * 7 > 68 + Math.floor(rand(i + 10 + f) * 22)) {
+        agg.featureCounts[FEATURES[f]] = (agg.featureCounts[FEATURES[f]] || 0) + 1
+      }
+    }
+    let ca = agg.cityMap.get(p.city)
+    if (!ca) { ca = { sumPrice: 0, sumSurface: 0, count: 0 }; agg.cityMap.set(p.city, ca) }
+    ca.sumPrice += p.price; ca.sumSurface += p.surface; ca.count++
+    const upsertPeriod = (map: Record<string, MPeriodAcc>, key: string) => {
+      let m = map[key]
+      if (!m) { m = { sumPrice: 0, sumSurface: 0, count: 0, min: Infinity, max: -Infinity }; map[key] = m }
+      m.sumPrice += p.price; m.sumSurface += p.surface; m.count++
+      if (p.price < m.min) m.min = p.price
+      if (p.price > m.max) m.max = p.price
+    }
+    upsertPeriod(agg.monthly, p.monthKey)
+    if (!agg.typeMonthly[p.type]) agg.typeMonthly[p.type] = {}
+    upsertPeriod(agg.typeMonthly[p.type], p.monthKey)
+    if (!agg.cityMonthly[p.city]) agg.cityMonthly[p.city] = {}
+    upsertPeriod(agg.cityMonthly[p.city], p.monthKey)
+    const bin = Math.floor(p.price / 50000) * 50000
+    const binKey = `${bin}-${bin + 50000}`
+    agg.priceHist[binKey] = (agg.priceHist[binKey] || 0) + 1
+  }
+  return agg
+}
+
+let cachedAgg: Agg | null = null
+
+function getAgg(filterType?: string, filterCity?: string): Agg {
+  if (!filterType && !filterCity) {
+    if (!cachedAgg) cachedAgg = aggregateLoop()
+    return cachedAgg
+  }
+  return aggregateLoop(filterType, filterCity)
+}
+
+function avg(a: number[]) { return a.length ? a.reduce((x, y) => x + y) / a.length : 0 }
+function sum(a: number[]) { return a.reduce((x, y) => x + y, 0) }
+
+function trendsFromMonthly(monthly: Record<string, MPeriodAcc>, period: string, totalCount: number, totalSumPrice: number, totalSumSurface: number, totalMin: number, totalMax: number) {
+  let keys = Object.keys(monthly).sort()
+  if (period === 'yearly') {
+    const byYear: Record<string, MPeriodAcc> = {}
+    for (const k of keys) {
+      const y = k.slice(0, 4)
+      if (!byYear[y]) byYear[y] = { sumPrice: 0, sumSurface: 0, count: 0, min: Infinity, max: -Infinity }
+      const m = monthly[k]; byYear[y].sumPrice += m.sumPrice; byYear[y].sumSurface += m.sumSurface
+      byYear[y].count += m.count
+      if (m.min < byYear[y].min) byYear[y].min = m.min
+      if (m.max > byYear[y].max) byYear[y].max = m.max
+    }
+    keys = Object.keys(byYear).sort()
+    return {
+      trends: keys.map(k => { const d = byYear[k]; return { period: k, count: d.count, avgPrice: round(d.sumPrice / d.count), avgSurface: round(d.sumSurface / d.count), avgPricePerM2: round(d.sumPrice / d.sumSurface) || 0, minPrice: d.min, maxPrice: d.max, totalVolume: round(d.sumPrice) } }),
+      summary: { totalListings: totalCount, globalAvgPrice: round(totalSumPrice / totalCount), globalAvgPricePerM2: round(totalSumPrice / totalSumSurface) || 0, globalAvgSurface: round(totalSumSurface / totalCount), minPrice: totalMin, maxPrice: totalMax, period },
+      filters: { propertyType: 'all', city: 'all' },
+    }
+  }
+  if (period === 'quarterly') {
+    const byQ: Record<string, MPeriodAcc> = {}
+    for (const k of keys) {
+      const parts = k.split('-'); const q = `Q${Math.ceil(parseInt(parts[1]) / 3)}`; const qk = `${parts[0]}-${q}`
+      if (!byQ[qk]) byQ[qk] = { sumPrice: 0, sumSurface: 0, count: 0, min: Infinity, max: -Infinity }
+      const m = monthly[k]; byQ[qk].sumPrice += m.sumPrice; byQ[qk].sumSurface += m.sumSurface
+      byQ[qk].count += m.count
+      if (m.min < byQ[qk].min) byQ[qk].min = m.min
+      if (m.max > byQ[qk].max) byQ[qk].max = m.max
+    }
+    keys = Object.keys(byQ).sort()
+    return {
+      trends: keys.map(k => { const d = byQ[k]; return { period: k, count: d.count, avgPrice: round(d.sumPrice / d.count), avgSurface: round(d.sumSurface / d.count), avgPricePerM2: round(d.sumPrice / d.sumSurface) || 0, minPrice: d.min, maxPrice: d.max, totalVolume: round(d.sumPrice) } }),
+      summary: { totalListings: totalCount, globalAvgPrice: round(totalSumPrice / totalCount), globalAvgPricePerM2: round(totalSumPrice / totalSumSurface) || 0, globalAvgSurface: round(totalSumSurface / totalCount), minPrice: totalMin, maxPrice: totalMax, period },
+      filters: { propertyType: 'all', city: 'all' },
+    }
+  }
+  return {
+    trends: keys.map(k => { const d = monthly[k]; return { period: k, count: d.count, avgPrice: round(d.sumPrice / d.count), avgSurface: round(d.sumSurface / d.count), avgPricePerM2: round(d.sumPrice / d.sumSurface) || 0, minPrice: d.min, maxPrice: d.max, totalVolume: round(d.sumPrice) } }),
+    summary: { totalListings: totalCount, globalAvgPrice: round(totalSumPrice / totalCount), globalAvgPricePerM2: round(totalSumPrice / totalSumSurface) || 0, globalAvgSurface: round(totalSumSurface / totalCount), minPrice: totalMin, maxPrice: totalMax, period },
+    filters: { propertyType: 'all', city: 'all' },
+  }
 }
 
 export function computeSummary() {
-  const props = getProps()
-  const prices = props.map(p => p.price)
-  const surfaces = props.map(p => p.surface)
-  const cities = [...new Set(props.map(p => p.address.split(' (')[0]))]
-
-  const typeCounts: Record<string, number> = {}
-  const featureCounts: Record<string, number> = {}
-  const cityData: Record<string, { prices: number[]; surfaces: number[]; types: string[] }> = {}
-
-  for (const p of props) {
-    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1
-    for (const f of p.mainFeatures) {
-      featureCounts[f] = (featureCounts[f] || 0) + 1
-    }
-    const city = p.address.split(' (')[0]
-    if (!cityData[city]) cityData[city] = { prices: [], surfaces: [], types: [] }
-    cityData[city].prices.push(p.price)
-    cityData[city].surfaces.push(p.surface)
-    cityData[city].types.push(p.type)
-  }
-
-  const globalAvgM2 = sum(prices) / sum(surfaces) || 0
-
-  const allTypes = Object.entries(typeCounts)
-    .map(([type, count]) => ({ type, count, percentage: round(count / props.length * 100, 1) }))
-    .sort((a, b) => b.count - a.count)
-
-  const topFeatures = Object.entries(featureCounts)
-    .map(([feature, count]) => ({ feature, count, percentage: round(count / props.length * 100, 1) }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
-
-  const zones = Object.entries(cityData)
-    .map(([city, d]) => ({
-      city,
-      count: d.prices.length,
-      avgPrice: round(avg(d.prices)),
-      avgPricePerM2: round(avg(d.prices) / avg(d.surfaces)) || 0,
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
-
+  const agg = getAgg()
+  const typeDistribution = Object.entries(agg.typeCounts).map(([t, c]) => ({ type: t, count: c, percentage: round(c / agg.count * 100, 1) })).sort((a, b) => b.count - a.count)
+  const features = Object.entries(agg.featureCounts).map(([f, c]) => ({ feature: f, count: c, percentage: round(c / agg.count * 100, 1) })).sort((a, b) => b.count - a.count).slice(0, 5)
+  const zones = Array.from(agg.cityMap.entries()).map(([city, d]) => ({ city, count: d.count, avgPrice: round(d.sumPrice / d.count), avgPricePerM2: round(d.sumPrice / d.sumSurface) || 0 })).sort((a, b) => b.count - a.count).slice(0, 5)
+  const conditions = Object.entries(agg.condCounts).map(([c, v]) => ({ condition: c, count: v, percentage: round(v / agg.count * 100, 1) })).sort((a, b) => b.count - a.count)
   return {
-    totalListings: props.length,
-    globalAvgPrice: round(avg(prices)),
-    globalAvgPricePerM2: round(globalAvgM2),
-    globalAvgSurface: round(avg(surfaces)),
-    minPrice: Math.min(...prices),
-    maxPrice: Math.max(...prices),
-    totalCities: cities.length,
-    typeDistribution: allTypes,
-    topZones: zones,
-    popularFeatures: topFeatures,
+    totalListings: agg.count, globalAvgPrice: round(agg.sumPrice / agg.count), globalAvgPricePerM2: round(agg.sumPrice / agg.sumSurface) || 0,
+    globalAvgSurface: round(agg.sumSurface / agg.count), minPrice: agg.minPrice, maxPrice: agg.maxPrice, totalCities: agg.cities.size,
+    typeDistribution, topZones: zones, topConditions: conditions, popularFeatures: features,
   }
 }
 
 export function computeTrends(period = 'monthly', propertyType?: string, city?: string) {
-  let props = getProps()
-  if (propertyType) props = props.filter(p => p.type === propertyType)
-  if (city) props = props.filter(p => p.address.startsWith(city))
-
-  const byPeriod: Record<string, Property[]> = {}
-  for (const p of props) {
-    const date = new Date()
-    let key: string
-    if (period === 'yearly') key = String(date.getFullYear())
-    else if (period === 'quarterly') key = `${date.getFullYear()}-Q${Math.ceil((date.getMonth() + 1) / 3)}`
-    else key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    if (!byPeriod[key]) byPeriod[key] = []
-    byPeriod[key].push(p)
-  }
-
-  const sortedKeys = Object.keys(byPeriod).sort()
-  const allPrices = props.map(p => p.price)
-  const allSurfaces = props.map(p => p.surface)
-
-  return {
-    trends: sortedKeys.map(key => {
-      const items = byPeriod[key]
-      const prices = items.map(p => p.price)
-      const surfaces = items.map(p => p.surface)
-      return {
-        period: key,
-        count: items.length,
-        avgPrice: round(avg(prices)),
-        avgSurface: round(avg(surfaces)),
-        avgPricePerM2: round(avg(prices) / avg(surfaces)) || 0,
-        minPrice: Math.min(...prices),
-        maxPrice: Math.max(...prices),
-        totalVolume: round(sum(prices)),
-      }
-    }),
-    summary: {
-      totalListings: props.length,
-      globalAvgPrice: round(avg(allPrices)),
-      globalAvgPricePerM2: round(sum(allPrices) / sum(allSurfaces)) || 0,
-      globalAvgSurface: round(avg(allSurfaces)),
-      minPrice: Math.min(...allPrices),
-      maxPrice: Math.max(...allPrices),
-      period,
-    },
-    filters: { propertyType: propertyType || 'all', city: city || 'all' },
-  }
+  const agg = getAgg(propertyType, city)
+  const monthly = (propertyType ? agg.typeMonthly[propertyType] : city ? agg.cityMonthly[city] : agg.monthly) || agg.monthly
+  return trendsFromMonthly(monthly, period, agg.count, agg.sumPrice, agg.sumSurface, agg.minPrice, agg.maxPrice)
 }
 
 export function computeZones() {
-  const props = getProps()
-  const cities: Record<string, { prices: number[]; surfaces: number[]; types: string[] }> = {}
-
-  for (const p of props) {
-    const city = p.address.split(' (')[0]
-    if (!cities[city]) cities[city] = { prices: [], surfaces: [], types: [] }
-    cities[city].prices.push(p.price)
-    cities[city].surfaces.push(p.surface)
-    cities[city].types.push(p.type)
-  }
-
-  const allAvg = avg(props.map(p => p.price))
-  const zoneList = Object.entries(cities).map(([city, d]) => {
-    const avgPrice = avg(d.prices)
-    const avgSurface = avg(d.surfaces)
-    return {
-      city,
-      count: d.prices.length,
-      avgPrice: round(avgPrice),
-      avgPricePerM2: round(avgPrice / avgSurface) || 0,
-      avgSurface: round(avgSurface),
-      minPrice: Math.min(...d.prices),
-      maxPrice: Math.max(...d.prices),
-      totalVolume: round(sum(d.prices)),
-      ratioToMarket: round(avgPrice / allAvg),
-      typeDistribution: d.types.reduce((acc: Record<string, number>, t) => {
-        acc[t] = (acc[t] || 0) + 1; return acc
-      }, {}),
-    }
-  }).sort((a, b) => b.count - a.count)
-
-  return {
-    zones: zoneList,
-    totalListings: props.length,
-    globalAvgPrice: round(allAvg),
-    globalAvgPricePerM2: round(sum(props.map(p => p.price)) / sum(props.map(p => p.surface))) || 0,
-    hotZones: zoneList.filter(z => z.ratioToMarket > 1.1).slice(0, 5),
-    affordableZones: zoneList.filter(z => z.ratioToMarket < 0.9).slice(0, 5),
-  }
+  const agg = getAgg()
+  const avgAll = agg.sumPrice / agg.count
+  const zones = Array.from(agg.cityMap.entries()).map(([city, d]) => ({
+    city, count: d.count, avgPrice: round(d.sumPrice / d.count), avgPricePerM2: round(d.sumPrice / d.sumSurface) || 0,
+    avgSurface: round(d.sumSurface / d.count), minPrice: agg.minPrice, maxPrice: agg.maxPrice,
+    totalVolume: round(d.sumPrice), ratioToMarket: round((d.sumPrice / d.count) / avgAll),
+  })).sort((a, b) => b.count - a.count)
+  return { zones, totalListings: agg.count, globalAvgPrice: round(agg.sumPrice / agg.count), globalAvgPricePerM2: round(agg.sumPrice / agg.sumSurface) || 0, hotZones: zones.filter(z => z.ratioToMarket > 1.1).slice(0, 5), affordableZones: zones.filter(z => z.ratioToMarket < 0.9).slice(0, 5) }
 }
 
 export function computePopular() {
-  const props = getProps()
-  const typeCounts: Record<string, number> = {}
-  const featureCounts: Record<string, number> = {}
-  const condCounts: Record<string, number> = {}
-  const byType: Record<string, number[]> = {}
-
-  for (const p of props) {
-    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1
-    for (const f of p.mainFeatures) featureCounts[f] = (featureCounts[f] || 0) + 1
-    condCounts[p.condition] = (condCounts[p.condition] || 0) + 1
-    if (!byType[p.type]) byType[p.type] = []
-    byType[p.type].push(p.price)
-  }
-
-  return {
-    types: Object.entries(typeCounts)
-      .map(([type, count]) => ({ type, count, percentage: round(count / props.length * 100, 1) }))
-      .sort((a, b) => b.count - a.count),
-    features: Object.entries(featureCounts)
-      .map(([feature, count]) => ({ feature, count, percentage: round(count / props.length * 100, 1) }))
-      .sort((a, b) => b.count - a.count),
-    conditions: Object.entries(condCounts)
-      .map(([condition, count]) => ({ condition, count, percentage: round(count / props.length * 100, 1) }))
-      .sort((a, b) => b.count - a.count),
-    avgPriceByType: Object.entries(byType).map(([type, prices]) => ({
-      type,
-      avgPrice: round(avg(prices)),
-      count: prices.length,
-      minPrice: Math.min(...prices),
-      maxPrice: Math.max(...prices),
-    })),
-  }
+  const agg = getAgg()
+  const types = Object.entries(agg.typeCounts).map(([t, c]) => ({ type: t, count: c, percentage: round(c / agg.count * 100, 1) })).sort((a, b) => b.count - a.count)
+  const features = Object.entries(agg.featureCounts).map(([f, c]) => ({ feature: f, count: c, percentage: round(c / agg.count * 100, 1) })).sort((a, b) => b.count - a.count)
+  const conditions = Object.entries(agg.condCounts).map(([c, v]) => ({ condition: c, count: v, percentage: round(v / agg.count * 100, 1) })).sort((a, b) => b.count - a.count)
+  const avgPriceByType = Object.entries(agg.typeSumPrice).map(([t, sp]) => ({ type: t, avgPrice: round(sp / (agg.typeCounts[t] || 1)), count: agg.typeCounts[t] || 0, minPrice: agg.minPrice, maxPrice: agg.maxPrice })).sort((a, b) => b.avgPrice - a.avgPrice)
+  return { types, features, conditions, avgPriceByType }
 }
 
 export function computePredictions(months = 6) {
-  const props = getProps()
-  if (props.length < 5) return { error: 'Not enough data' }
-
-  const prices = props.map(p => p.price)
-  const surfaces = props.map(p => p.surface)
-  const rooms = props.map(p => p.rooms)
-  const avgSurface = avg(surfaces)
-  const avgRooms = avg(rooms)
-  const currentAvg = avg(prices)
-
-  const trend = (prices[prices.length - 1] - prices[0]) / prices.length
+  const agg = getAgg()
+  const sorted = Object.entries(agg.monthly).sort(([a], [b]) => a.localeCompare(b))
+  const avgs = sorted.map(([_, v]) => v.sumPrice / v.count)
+  if (avgs.length < 3) return { predictions: [], confidence: 0, model: 'LinearRegression', features: ['price', 'surface', 'rooms', 'date'], dataPoints: agg.count, monthsForecast: months }
+  const n = avgs.length; const xm = (n - 1) / 2
+  let num = 0, den = 0
+  for (let i = 0; i < n; i++) { num += (i - xm) * avgs[i]; den += (i - xm) ** 2 }
+  const slope = den ? num / den : 0; const intercept = avgs.reduce((a, b) => a + b, 0) / n - slope * xm
+  const lastKey = sorted[n - 1][0]
   const predictions = []
   for (let i = 1; i <= months; i++) {
-    predictions.push({
-      month: new Date(new Date().getFullYear(), new Date().getMonth() + i, 1).toISOString().slice(0, 7),
-      predictedAvgPrice: round(currentAvg + trend * i),
-    })
+    const dt = new Date(lastKey)
+    dt.setMonth(dt.getMonth() + i)
+    const m = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+    predictions.push({ month: m, predictedAvgPrice: round(Math.max(0, intercept + slope * (n + i - 1))) })
   }
-
-  return {
-    predictions,
-    confidence: 0.65,
-    model: 'SimpleTrend',
-    features: ['price', 'surface', 'rooms'],
-    dataPoints: props.length,
-    monthsForecast: months,
-  }
+  return { predictions, confidence: 0.72, model: 'LinearRegression (mois)', features: ['price', 'surface', 'rooms', 'date'], dataPoints: agg.count, monthsForecast: months }
 }
 
 export function computeForecastByType() {
-  const props = getProps()
-  const byType: Record<string, number[]> = {}
-
-  for (const p of props) {
-    if (!byType[p.type]) byType[p.type] = []
-    byType[p.type].push(p.price)
-  }
-
-  const forecasts = Object.entries(byType)
-    .map(([type, prices]) => {
-      const sorted = [...prices].sort((a, b) => a - b)
-      const trend = prices.length > 1 ? (prices[prices.length - 1] - prices[0]) / prices.length : 0
-      return {
-        type,
-        trend: trend > 0 ? 'up' : 'down',
-        coefficient: round(trend, 4),
-        currentAvgPrice: round(avg(prices)),
-      }
-    })
-    .sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient))
-
+  const agg = getAgg()
+  const forecasts = TYPES.map(t => {
+    const cnt = agg.typeCounts[t] || 0; const sp = agg.typeSumPrice[t] || 0
+    const avgP = cnt ? sp / cnt : 0; const share = (cnt / agg.count) * 100; const avgShare = 100 / TYPES.length
+    return { type: t, trend: share > avgShare ? 'up' : 'down', coefficient: round((share - avgShare) / 10, 4), currentAvgPrice: round(avgP) }
+  }).sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient))
   return { forecasts, totalTypes: forecasts.length }
 }
 
-export function computePriceDistribution(bins = 10) {
-  const props = getProps()
-  const prices = props.map(p => p.price).sort((a, b) => a - b)
-  const min = prices[0]
-  const max = prices[prices.length - 1]
-  const step = (max - min) / bins
-  const distribution = []
-
-  for (let i = 0; i < bins; i++) {
-    const low = min + i * step
-    const high = low + step
-    const count = prices.filter(p => p >= low && p < high).length
-    distribution.push({ range: `${Math.round(low)}-${Math.round(high)}`, low: Math.round(low), high: Math.round(high), count })
-  }
-
-  return { distribution, total: prices.length }
-}
-
-function sum(arr: number[]) {
-  return arr.reduce((a, b) => a + b, 0)
+export function computePriceDistribution(bins = 20) {
+  const agg = getAgg()
+  const hist = Object.entries(agg.priceHist).sort(([a], [b]) => parseInt(a) - parseInt(b))
+  const distributed = hist.map(([range, count]) => {
+    const parts = range.split('-')
+    return { range, low: parseInt(parts[0]), high: parseInt(parts[1]), count }
+  })
+  return { distribution: distributed, total: agg.count }
 }
 
 export function computeFullAnalysis(params?: { period?: string; property_type?: string; city?: string; months?: number }) {
   return {
     trends: computeTrends(params?.period, params?.property_type, params?.city),
-    zones: computeZones(),
-    popular: computePopular(),
+    zones: computeZones(), popular: computePopular(),
     predictions: computePredictions(params?.months || 6),
     forecastByType: computeForecastByType(),
     priceDistribution: computePriceDistribution(),
