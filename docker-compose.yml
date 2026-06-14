@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ymmo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: YMMO_Dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: YMMO_BackEnd
+      dockerfile: Dockerfile
+    container_name: ymmo-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Database=YMMO_Dev;Username=postgres;Password=postgres
+      Jwt__Issuer: YMMO_Backend
+      Jwt__Audience: YMMO_Frontend
+      Jwt__Key: YmmoDevJwtSecretKey2024MinLength32Chars
+      CORS__Origins: http://localhost:5173,http://localhost:8080
+    ports:
+      - "5000:8080"
+
+  frontend:
+    build:
+      context: YMMO_FrontEnd
+      dockerfile: Dockerfile
+    container_name: ymmo-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

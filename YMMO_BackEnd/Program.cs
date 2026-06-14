@@ -76,11 +76,13 @@ try
             };
         });
 
+    var corsOrigins = builder.Configuration["CORS:Origins"] ?? "http://localhost:5173";
+    var allowedOrigins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:5173")
+            policy.WithOrigins(allowedOrigins)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
@@ -115,13 +117,26 @@ try
         app.UseSwaggerUI();
     }
 
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<YmmoDbContext>();
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("Database migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not apply migrations: {ex.Message}");
+        }
+    }
+
     // ──────────────────────────────────────────────────────────
     // 3. MIDDLEWARE PIPELINE
     // ──────────────────────────────────────────────────────────
     app.UseMiddleware<ErrorHandlingMiddleware>();
 
-    if (!app.Environment.IsDevelopment())
-        app.UseHttpsRedirection();
+    // HTTPS redirection is handled by the reverse proxy (nginx) in production
     
     app.UseRouting(); // Nécessaire avant UseCors
     app.UseCors("AllowFrontend");
