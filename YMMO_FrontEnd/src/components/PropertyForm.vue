@@ -41,6 +41,20 @@
       </div>
       <div class="row">
         <div class="field flex-1">
+          <label class="label" for="prop-rooms">Pièces</label>
+          <input id="prop-rooms" v-model.number="form.rooms" type="number" class="input" min="1" max="50" />
+        </div>
+        <div class="field flex-1">
+          <label class="label" for="prop-furnishing">Meublé</label>
+          <select id="prop-furnishing" v-model="form.furnishing" class="input">
+            <option value="">Non spécifié</option>
+            <option value="Meublé">Meublé</option>
+            <option value="Non meublé">Non meublé</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field flex-1">
           <label class="label" for="prop-condition">État</label>
           <select id="prop-condition" v-model="form.condition" class="input" required>
             <option value="" disabled>Sélectionner</option>
@@ -51,7 +65,7 @@
           <label class="label" for="prop-energy">Classe énergétique</label>
           <select id="prop-energy" v-model="form.energyClass" class="input">
             <option value="" disabled>Sélectionner</option>
-            <option v-for="e in energyClasses" :key="e" :value="e">{{ e }}</option>
+            <option v-for="e in energyClasses" :key="e.value" :value="e.value">{{ e.label }}</option>
           </select>
         </div>
       </div>
@@ -86,15 +100,40 @@
     </fieldset>
 
     <fieldset class="fieldset">
-      <legend class="legend">Critères</legend>
+      <legend class="legend">Extérieurs et Annexes</legend>
       <div class="checkbox-grid">
-        <label v-for="c in allCriteria" :key="c.value" class="checkbox-label">
-          <input
-            type="checkbox"
-            :value="c.value"
-            :checked="form.features.includes(c.value)"
-            @change="toggleCriteria(c.value)"
-          />
+        <label v-for="c in criteriaGroups.exterieur" :key="c.value" class="checkbox-label">
+          <input type="checkbox" :value="c.value" :checked="form.features.includes(c.value)" @change="toggleCriteria(c.value)" />
+          {{ c.label }}
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="legend">Intérieur et Confort</legend>
+      <div class="checkbox-grid">
+        <label v-for="c in criteriaGroups.interieur" :key="c.value" class="checkbox-label">
+          <input type="checkbox" :value="c.value" :checked="form.features.includes(c.value)" @change="toggleCriteria(c.value)" />
+          {{ c.label }}
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="legend">Sécurité et Vues</legend>
+      <div class="checkbox-grid">
+        <label v-for="c in criteriaGroups.securite" :key="c.value" class="checkbox-label">
+          <input type="checkbox" :value="c.value" :checked="form.features.includes(c.value)" @change="toggleCriteria(c.value)" />
+          {{ c.label }}
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="legend">Tech & Énergie</legend>
+      <div class="checkbox-grid">
+        <label v-for="c in criteriaGroups.tech" :key="c.value" class="checkbox-label">
+          <input type="checkbox" :value="c.value" :checked="form.features.includes(c.value)" @change="toggleCriteria(c.value)" />
           {{ c.label }}
         </label>
       </div>
@@ -108,7 +147,7 @@
 
 <script setup lang="ts">
 import { reactive, computed } from 'vue'
-import { PropertyType, PhysicalCondition, EnergyClass, Criteria } from '@/types'
+import { Criteria } from '@/types'
 
 const props = withDefaults(defineProps<{
   submitLabel?: string
@@ -116,13 +155,15 @@ const props = withDefaults(defineProps<{
   initialData?: Partial<{
     propertyName: string
     propertyDescription: string | null
-    propertyType: PropertyType
+    propertyType: string
     yearBuilt: number
-    condition: PhysicalCondition
-    energyClass: EnergyClass
+    condition: string
+    energyClass: string
     initialPrice: number
     surface: number
-    features: Criteria[]
+    rooms: number
+    furnishing: string
+    features: string[]
     location: Partial<{
       street: string
       city: string
@@ -144,41 +185,87 @@ const currentYear = new Date().getFullYear()
 const error = ''
 
 const propertyTypes = [
-  { value: PropertyType.Apartment, label: 'Appartement' },
-  { value: PropertyType.House, label: 'Maison' },
-  { value: PropertyType.Commercial, label: 'Local commercial' },
-  { value: PropertyType.Land, label: 'Terrain' },
+  { value: 'Apartment', label: 'Appartement' },
+  { value: 'House', label: 'Maison' },
+  { value: 'Commercial', label: 'Local commercial' },
+  { value: 'Land', label: 'Terrain' },
+  { value: 'Office', label: 'Bureau' },
+  { value: 'Garage', label: 'Garage' },
+  { value: 'Parking', label: 'Parking' },
 ]
 
 const conditions = [
-  { value: PhysicalCondition.New, label: 'Neuf' },
-  { value: PhysicalCondition.GoodCondition, label: 'Bon état' },
-  { value: PhysicalCondition.ToRenovate, label: 'À rénover' },
-  { value: PhysicalCondition.ToDestroy, label: 'À détruire' },
+  { value: 'New', label: 'Neuf' },
+  { value: 'Excellent', label: 'Excellent état' },
+  { value: 'Good', label: 'Bon état' },
+  { value: 'NeedsRefresh', label: 'À rafraîchir' },
+  { value: 'NeedsRenovation', label: 'À rénover' },
+  { value: 'Ruin', label: 'Ruine' },
 ]
 
-const energyClasses = Object.values(EnergyClass)
-
-const allCriteria = [
-  { value: Criteria.Parking, label: 'Parking' },
-  { value: Criteria.Garden, label: 'Jardin' },
-  { value: Criteria.Pool, label: 'Piscine' },
-  { value: Criteria.Terrace, label: 'Terrasse' },
-  { value: Criteria.Elevator, label: 'Ascenseur' },
-  { value: Criteria.Cellar, label: 'Cave' },
-  { value: Criteria.Furnished, label: 'Meublé' },
+const energyClasses = [
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+  { value: 'C', label: 'C' },
+  { value: 'D', label: 'D' },
+  { value: 'E', label: 'E' },
+  { value: 'F', label: 'F' },
+  { value: 'G', label: 'G' },
+  { value: 'Ex', label: 'Exempt' },
 ]
+
+const criteriaGroups = {
+  exterieur: [
+    { value: Criteria.Balcony, label: 'Balcon' },
+    { value: Criteria.Terrace, label: 'Terrasse' },
+    { value: Criteria.Garden, label: 'Jardin' },
+    { value: Criteria.Garage, label: 'Garage fermé' },
+    { value: Criteria.Parking, label: 'Parking' },
+    { value: Criteria.Cellar, label: 'Cave' },
+    { value: Criteria.SwimmingPool, label: 'Piscine' },
+  ],
+  interieur: [
+    { value: Criteria.Elevator, label: 'Ascenseur' },
+    { value: Criteria.AirConditioning, label: 'Climatisation' },
+    { value: Criteria.Fireplace, label: 'Cheminée' },
+    { value: Criteria.Furnished, label: 'Meublé' },
+    { value: Criteria.HardwoodFloor, label: 'Parquet' },
+    { value: Criteria.DoubleGlazing, label: 'Double vitrage' },
+    { value: Criteria.FittedKitchen, label: 'Cuisine équipée' },
+    { value: Criteria.Studio, label: 'Studio' },
+  ],
+  securite: [
+    { value: Criteria.Digicode, label: 'Digicode' },
+    { value: Criteria.Intercom, label: 'Interphone' },
+    { value: Criteria.AlarmSystem, label: 'Alarme' },
+    { value: Criteria.SecurityDoor, label: 'Porte blindée' },
+    { value: Criteria.Caretaker, label: 'Gardien' },
+    { value: Criteria.SeaView, label: 'Vue mer' },
+    { value: Criteria.MountainView, label: 'Vue montagne' },
+    { value: Criteria.UnobstructedView, label: 'Vue dégagée' },
+    { value: Criteria.SouthFacing, label: 'Exposition sud' },
+  ],
+  tech: [
+    { value: Criteria.DisabledAccess, label: 'Accès PMR' },
+    { value: Criteria.FiberOptic, label: 'Fibre optique' },
+    { value: Criteria.SmartHome, label: 'Domotique' },
+    { value: Criteria.HeatPump, label: 'Pompe à chaleur' },
+    { value: Criteria.SolarPanels, label: 'Panneaux solaires' },
+  ],
+}
 
 const form = reactive({
   propertyName: props.initialData?.propertyName ?? '',
   propertyDescription: props.initialData?.propertyDescription ?? '',
-  propertyType: props.initialData?.propertyType ?? ('' as PropertyType),
+  propertyType: props.initialData?.propertyType ?? '',
   yearBuilt: props.initialData?.yearBuilt ?? currentYear,
-  condition: props.initialData?.condition ?? ('' as PhysicalCondition),
-  energyClass: props.initialData?.energyClass ?? ('' as EnergyClass),
+  condition: props.initialData?.condition ?? '',
+  energyClass: props.initialData?.energyClass ?? '',
   initialPrice: props.initialData?.initialPrice ?? 0,
   surface: props.initialData?.surface ?? 0,
-  features: props.initialData?.features ?? ([] as Criteria[]),
+  rooms: props.initialData?.rooms ?? 1,
+  furnishing: props.initialData?.furnishing ?? '',
+  features: props.initialData?.features ?? ([] as string[]),
   location: reactive({
     street: props.initialData?.location?.street ?? '',
     city: props.initialData?.location?.city ?? '',
@@ -188,7 +275,7 @@ const form = reactive({
   }),
 })
 
-function toggleCriteria(value: Criteria) {
+function toggleCriteria(value: string) {
   const idx = form.features.indexOf(value)
   if (idx >= 0) form.features.splice(idx, 1)
   else form.features.push(value)
@@ -204,6 +291,8 @@ function handleSubmit() {
     energyClass: form.energyClass,
     initialPrice: form.initialPrice,
     surface: form.surface,
+    rooms: form.rooms,
+    furnishing: form.furnishing,
     features: form.features,
     location: { ...form.location },
   })
@@ -328,5 +417,10 @@ function handleSubmit() {
 
 select.input {
   appearance: auto;
+}
+
+@media (max-width: 480px) {
+  .row { flex-direction: column; gap: 0; }
+  .property-form { padding: 0 0.5rem; }
 }
 </style>

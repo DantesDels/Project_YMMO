@@ -1,48 +1,50 @@
 ﻿<template>
-  <router-link :to="`/property/${property.id}`" class="property-card-link">
-    <div class="property-card">
-      <div class="image-container">
-        <img :src="property.image || 'https://via.placeholder.com/300'" :alt="property.title" loading="lazy" />
-        <button class="fav-btn" :class="{ active: isFav }" @click.stop="toggleFav" :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
-        <div class="badges-top">
-          <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
-          <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
-        </div>
-        <div v-if="property.energyClass" class="badges-bottom">
-          <span class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
-            {{ property.energyClass }}
+  <router-link :to="`/property/${property.id}`" custom v-slot="{ navigate }">
+    <div class="property-card-link" @click="navigate" @keydown.enter="navigate" role="link" tabindex="0">
+      <div class="property-card">
+        <div class="image-container">
+          <img :src="property.image || 'https://via.placeholder.com/300'" :alt="property.title" loading="lazy" />
+          <span class="fav-btn" :class="{ active: isFav }" @click.stop="toggleFav" role="button" tabindex="0" @keydown.enter.stop="toggleFav" @keydown.space.prevent.stop="toggleFav" :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </span>
+          <div class="badges-top">
+            <span v-if="property.type" class="badge type-badge">{{ translateType(property.type) }}</span>
+            <span v-if="property.isPromotion" class="badge promo">Promotion en cours</span>
+          </div>
+          <div v-if="property.energyClass" class="badges-bottom">
+            <span class="badge energy" :class="`energy-${property.energyClass.toLowerCase()}`">
+              {{ property.energyClass }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div class="content">
-        <div class="title-row">
-          <h3 class="title">{{ property.title || 'Logement sans titre' }}</h3>
-          <span v-if="property.condition" class="condition-badge">{{ translateCondition(property.condition) }}</span>
+        <div class="content">
+          <div class="title-row">
+            <h3 class="title">{{ property.title || 'Logement sans titre' }}</h3>
+            <span v-if="property.condition" class="condition-badge">{{ translateCondition(property.condition) }}</span>
+          </div>
+
+          <p class="location">{{ property.address || 'Adresse non spécifiée' }}</p>
+          <p class="specs">
+            {{ property.surface || 0 }}m²<span v-if="property.rooms"> · {{ property.rooms }} pièces</span><span v-if="property.furnishing"> · {{ property.furnishing }}</span>
+          </p>
+
+          <div v-if="displayCriteria.length > 0" class="criteria-list">
+            <span v-for="c in displayCriteria" :key="c" class="criteria-badge">
+              {{ translateCriteria(c) }}
+            </span>
+          </div>
         </div>
 
-        <p class="location">{{ property.address || 'Adresse non spécifiée' }}</p>
-        <p class="specs">
-          {{ property.surface || 0 }}m²<span v-if="property.rooms"> · {{ property.rooms }} pièces</span><span v-if="property.furnishing"> · {{ property.furnishing }}</span>
-        </p>
-
-        <div v-if="displayCriteria.length > 0" class="criteria-list">
-          <span v-for="c in displayCriteria" :key="c" class="criteria-badge">
-            {{ translateCriteria(c) }}
+        <div class="footer">
+          <span class="price">
+            <strong>{{ formatNumber(property.price || 0) }}€</strong>
           </span>
-        </div>
-      </div>
-
-      <div class="footer">
-        <span class="price">
-          <strong>{{ formatNumber(property.price || 0) }}€</strong>
-        </span>
-        <div v-if="property.availabilityDate" class="availability">
-          ● Disponible {{ property.availabilityDate }}
+          <div v-if="property.availabilityDate" class="availability">
+            ● Disponible {{ property.availabilityDate }}
+          </div>
         </div>
       </div>
     </div>

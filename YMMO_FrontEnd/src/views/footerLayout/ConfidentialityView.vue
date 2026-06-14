@@ -33,7 +33,13 @@ import LegalLayout from '@/layouts/LegalLayout.vue';
 
 <style scoped>
 .legal-header { margin-bottom: 3rem; }
-.legal-header h1 { font-size: 2.5rem; color: #1e2956; margin-bottom: 0.5rem; }
+.legal-header h1 {
+  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+  color: #1e2956;
+  margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 .subtitle { color: #64748b; font-size: 1.1rem; }
 
 .info-box {

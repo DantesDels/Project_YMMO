@@ -27,8 +27,12 @@ import AppButton from '@/components/ui/AppButton.vue';
 .back-link { margin-bottom: 2rem; display: inline-block; }
 
 .legal-content h1 {
-  font-size: 2.5rem; color: #1e2956; margin-bottom: 0.5rem;
-  text-align: center; /* On garde le titre de page centré */
+  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+  color: #1e2956;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .legal-content .subtitle {

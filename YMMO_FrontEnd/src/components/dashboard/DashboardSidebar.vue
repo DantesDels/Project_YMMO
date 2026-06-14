@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar" :class="{ 'sidebar-open': mobileNavOpen }">
     <div class="sidebar-header">
-      <h2 class="sidebar-title">Mon compte</h2>
+      <h2 class="sidebar-title">{{ title }}</h2>
       <button class="sidebar-close" @click="$emit('close')" aria-label="Fermer la navigation">×</button>
     </div>
     <nav class="sidebar-nav" role="tablist" aria-label="Sections du compte" @keydown="onTabKeydown">
@@ -34,6 +34,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
+      <router-link to="/catalog" class="btn-public-site">Catalogue</router-link>
       <router-link to="/" class="btn-public-site">← Site public</router-link>
       <button class="logout-btn" @click="$emit('logout')">Déconnexion</button>
     </div>
@@ -48,10 +49,23 @@ interface NavItem {
   label: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   activeSection: string
   mobileNavOpen: boolean
-}>()
+  navItems?: NavItem[]
+  navItemsBottom?: NavItem[]
+  title?: string
+}>(), {
+  navItems: () => [
+    { id: 'profile', label: 'Profil' },
+    { id: 'wishlist', label: 'Mes favoris' },
+  ],
+  navItemsBottom: () => [
+    { id: 'offers', label: 'Mes offres' },
+    { id: 'sell', label: 'Mes ventes' },
+  ],
+  title: 'Mon compte',
+})
 
 defineEmits<{
   (e: 'switchSection', id: string): void
@@ -59,17 +73,7 @@ defineEmits<{
   (e: 'logout'): void
 }>()
 
-const navItems: NavItem[] = [
-  { id: 'profile', label: 'Profil' },
-  { id: 'wishlist', label: 'Mes favoris' },
-]
-
-const navItemsBottom: NavItem[] = [
-  { id: 'offers', label: 'Mes offres' },
-  { id: 'sell', label: 'Mes ventes' },
-]
-
-const allNavItems = computed(() => [...navItems, ...navItemsBottom])
+const allNavItems = computed(() => [...props.navItems, ...props.navItemsBottom])
 
 function onTabKeydown(e: KeyboardEvent) {
   const items = allNavItems.value

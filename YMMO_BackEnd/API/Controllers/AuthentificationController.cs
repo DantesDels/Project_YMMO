@@ -43,4 +43,28 @@ public class AuthentificationController : ControllerBase
         // en supprimant le token du navigateur. L'API a juste besoin de dire OK.
         return Ok(new { message = "Déconnexion réussie." });
     }
+
+    /// <summary>
+    /// Debug-only agent login endpoint.
+    ///
+    /// Bypasses the database and validates credentials against the Debug section
+    /// in appsettings. Returns a valid JWT with the Agent role when the
+    /// Debug:EnableAgentAccount flag is set to true.
+    ///
+    /// Disabled by default in production. Hidden from Swagger documentation
+    /// via [ApiExplorerSettings(IgnoreApi = true)].
+    ///
+    /// Usage (development only):
+    ///   POST /api/authentification/debug-login
+    ///   { "email": "agent@debug.ymmo", "password": "Debug@Agent1" }
+    ///
+    /// See AuthentificationService.DebugLoginAsync for implementation details.
+    /// </summary>
+    [HttpPost("debug-login")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<IActionResult> DebugLoginAsync([FromBody] AuthentificationDto.DebugLoginRequest request)
+    {
+        var response = await _authentificationService.DebugLoginAsync(request);
+        return Ok(response);
+    }
 }

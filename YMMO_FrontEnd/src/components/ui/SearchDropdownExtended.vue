@@ -1,13 +1,15 @@
 ﻿<template>
   <div class="field dropdown" :class="{ active: isOpen }" v-click-outside="close">
-    <button class="dropdown-trigger" type="button" @click="toggle">
-      <span class="label">{{ label }}</span>
-      <span class="value">{{ displayValue }}</span>
+    <div class="trigger-wrap">
+      <button class="dropdown-trigger" type="button" @click="toggle">
+        <span class="label">{{ label }}</span>
+        <span class="value">{{ displayValue }}</span>
+        <svg class="chevron" :class="{ open: isOpen }" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+        </svg>
+      </button>
       <button v-if="modelValue.length" class="clear-btn" type="button" @click.stop="clear" aria-label="Effacer la sélection">×</button>
-      <svg class="chevron" :class="{ open: isOpen }" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>
-    </button>
+    </div>
 
     <Transition name="popover">
       <div v-if="isOpen" class="popover extended">
@@ -87,11 +89,19 @@ const displayValue = computed(() => {
   transition: box-shadow 0.15s ease;
 }
 
+.trigger-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
 .dropdown-trigger {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   padding: 0;
@@ -139,6 +149,7 @@ const displayValue = computed(() => {
   top: calc(100% + 12px); /* Un léger espace sous le bouton */
   left: 0;
   width: 500px;
+  max-width: calc(100vw - 2rem);
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -164,9 +175,13 @@ letter-spacing: 0.05em;
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Deux colonnes égales */
-  gap: 12px 20px; /* Plus d'espace horizontal entre les colonnes */
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
   margin-bottom: 20px;
+}
+
+@media (max-width: 480px) {
+  .grid-layout { grid-template-columns: 1fr; }
 }
 
 .checkbox-label {

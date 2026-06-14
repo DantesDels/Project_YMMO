@@ -34,6 +34,11 @@ defineProps({
   cursor: pointer;
 }
 
+.btn:focus-visible {
+  outline: 2px solid var(--color-secondary, #004ecc);
+  outline-offset: 2px;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: default;
@@ -103,5 +108,27 @@ defineProps({
   transform: translateX(-2px) scale(0.98);
   box-shadow: none;
   transition: all 0.05s ease;
+}
+
+.btn-link {
+  padding: 0.3rem 0.75rem;
+  background: none;
+  color: #94a3b8;
+  font-weight: 500;
+  box-shadow: none;
+  border-radius: 6px;
+}
+
+.btn-link:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #64748b;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-link:active:not(:disabled) {
+  background: #f1f5f9;
+  transform: none;
+  box-shadow: none;
 }
 </style>

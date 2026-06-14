@@ -133,6 +133,37 @@ export const useAuthentificationStore = defineStore('authentification', {
       }
     },
 
+    /**
+     * Debug agent login — calls the backend debug-login endpoint.
+     * Sends hardcoded debug credentials; the backend validates them
+     * against the Debug section in appsettings (not the database).
+     * Falls back to a frontend mock token if the backend is unreachable,
+     * so developers can test the agent dashboard even without a running API.
+     */
+    async debugAgentLogin() {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const { data } = await api.post<AuthentificationResponse>('/authentification/debug-login', {
+          email: 'agent@debug.ymmo',
+          password: 'Debug@Agent1',
+        });
+        localStorage.setItem('token', data.token);
+        const decoded = jwtDecode<JwtPayload>(data.token);
+        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        this.user = { token: data.token, username: data.username, contactId: data.contactID, role, ...loadProfileFromStorage() };
+      } catch {
+        // Backend unreachable — fall back to a local mock JWT with Agent role
+        const MOCK_AGENT_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZ2VudCIsInVzZXJuYW1lIjoiRGVidWdBZ2VudCIsIm5hbWVpZCI6IkRFQjhBMDAxLTAwMDEtMDAwMS0wMDAxLTAwMDAwMDAwMDAwMSIsImV4cCI6MTg5MzQ1NjAwMH0.MOCK_SIGNATURE';
+        localStorage.setItem('token', MOCK_AGENT_JWT);
+        const decoded = jwtDecode<JwtPayload>(MOCK_AGENT_JWT);
+        const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        this.user = { token: MOCK_AGENT_JWT, username: 'DebugAgent', contactId: decoded.nameid, role, ...loadProfileFromStorage() };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     updateProfile(data: Partial<AuthentificationUser>) {
       if (!this.user) return
       this.user = { ...this.user, ...data }
@@ -142,7 +173,6 @@ export const useAuthentificationStore = defineStore('authentification', {
     logout() {
       this.user = null;
       localStorage.removeItem('token');
-      window.location.href = '/login';
     }
   }
 });

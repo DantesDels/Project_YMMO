@@ -11,18 +11,37 @@
     --font-heading: 'Poppins', var(--font-sans); /* Requires loading Poppins font */
 }
 
+html {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    padding: 1rem;
-    font: 18px/145% var(--font-sans);
+    width: 100%;
+    overflow-x: hidden;
+    font: clamp(14px, 1.2vw, 22px)/145% var(--font-sans);
     color: var(--color-text-main);
     background: var(--color-bg);
-    overflow-x: hidden;
 }
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* focus-visible global — couvre tous les composants sans duplication */
+:focus-visible {
+  outline: 2px solid var(--color-secondary, #004ecc);
+  outline-offset: 2px;
+}
+
+
 
 .container {
     width: 100%;
@@ -31,8 +50,14 @@ body {
     padding: 0 1rem;
 }
 
-h1, h2, h3 { 
-    font-family: var(--font-heading); 
+h1, h2, h3 {
+    font-family: var(--font-heading);
     color: var(--color-primary);
     text-align: center;
+}
+
+h1 {
+    line-height: 1.2;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }

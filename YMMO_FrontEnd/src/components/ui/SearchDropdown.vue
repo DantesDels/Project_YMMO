@@ -4,14 +4,16 @@
       :class="{ active: isOpen || modelValue.length }"
       v-click-outside="close"
   >
-    <button class="dropdown-trigger" type="button" @click="toggle">
-      <span class="label">{{ label }}</span>
-      <span class="value">{{ displayValue }}</span>
+    <div class="trigger-wrap">
+      <button class="dropdown-trigger" type="button" @click="toggle">
+        <span class="label">{{ label }}</span>
+        <span class="value">{{ displayValue }}</span>
+        <svg class="chevron" :class="{ open: isOpen }" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+        </svg>
+      </button>
       <button v-if="modelValue.length" class="clear-btn" type="button" @click.stop="clear" aria-label="Effacer la sélection">×</button>
-      <svg class="chevron" :class="{ open: isOpen }" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-      </svg>
-    </button>
+    </div>
 
     <Transition name="popover">
       <div v-if="isOpen" class="popover">
@@ -97,11 +99,19 @@ const displayValue = computed(() => {
   box-shadow: 0 0 0 2px #1e2956;
 }
 
+.trigger-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
 .dropdown-trigger {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   padding: 0;
@@ -166,6 +176,7 @@ const displayValue = computed(() => {
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.15);
   width: 220px;
+  max-width: calc(100vw - 3rem);
   display: flex;
   flex-direction: column;
   gap: 4px;

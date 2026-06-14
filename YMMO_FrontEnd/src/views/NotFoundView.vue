@@ -90,4 +90,11 @@
   height: 64px;
   stroke: #10b981;
 }
+
+@media (max-width: 480px) {
+  .error-code { font-size: 5rem; }
+  .error-title { font-size: 1.4rem; }
+  .actions { flex-direction: column; width: 100%; }
+  .actions a, .actions button { width: 100%; text-align: center; }
+}
 </style>
