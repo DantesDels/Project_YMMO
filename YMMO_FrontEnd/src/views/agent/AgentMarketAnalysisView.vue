@@ -163,7 +163,7 @@ onMounted(loadFullAnalysis)
 
 <style scoped>
 .ama-layout { display: flex; min-height: 100vh; background: #f5f5f7; }
-.ama-content { flex: 1; padding: 2rem; overflow-x: auto; display: flex; flex-direction: column; gap: 1.5rem; }
+.ama-content { flex: 1; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 .ama-toolbar { display: flex; align-items: center; gap: 1rem; }
 .ama-toolbar h1 { font-size: 1.5rem; color: #1e2956; margin: 0; }
 .ama-mobile-toggle { display: none; background: none; border: none; cursor: pointer; color: #1e2956; padding: 0.25rem; }

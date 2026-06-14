@@ -34,7 +34,10 @@ function scrollTo(id: string) {
   border-right: 1px solid #e5e7eb;
   padding: 1rem 0;
   overflow-y: auto;
-  height: 100%;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
 }
 .atoc-header {
   padding: 0.5rem 1rem;
