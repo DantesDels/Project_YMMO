@@ -54,16 +54,26 @@
 <script setup>
 import { computed } from 'vue';
 import { formatNumber } from '@/utils/formatters';
+import { useAuthentificationStore } from '@/stores/authentification.store';
 import { useWishlistStore } from '@/stores/wishlist.store';
 
 const props = defineProps({
   property: { type: Object, required: true }
 });
 
+const auth = useAuthentificationStore()
 const wishlist = useWishlistStore()
 const isFav = computed(() => wishlist.isFavorite(props.property.id))
 
 function toggleFav() {
+  if (!auth.user) {
+    wishlist.showToast('Vous devez être connecté pour ajouter un favori.')
+    return
+  }
+  if (auth.user.role === 'Agent') {
+    wishlist.showToast('Les agents ne peuvent pas ajouter de favoris.')
+    return
+  }
   wishlist.toggleFavorite(props.property.id)
 }
 

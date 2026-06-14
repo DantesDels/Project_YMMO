@@ -167,9 +167,11 @@ import { getMockAgentById } from '@/utils/mockData'
 import { useRoute } from 'vue-router'
 import { getMockPropertyById } from '@/utils/mockData'
 import { useCustomProperties } from '@/stores/customProperties.store'
+import { useAuthentificationStore } from '@/stores/authentification.store'
 import { useWishlistStore } from '@/stores/wishlist.store'
 
 const route = useRoute()
+const auth = useAuthentificationStore()
 const wishlist = useWishlistStore()
 const property = ref(null)
 const loading = ref(true)
@@ -191,7 +193,16 @@ watch(showContactPopup, (val) => {
 const isFav = computed(() => property.value ? wishlist.isFavorite(property.value.id) : false)
 
 function toggleFav() {
-  if (property.value) wishlist.toggleFavorite(property.value.id)
+  if (!property.value) return
+  if (!auth.user) {
+    wishlist.showToast('Vous devez être connecté pour ajouter un favori.')
+    return
+  }
+  if (auth.user.role === 'Agent') {
+    wishlist.showToast('Les agents ne peuvent pas ajouter de favoris.')
+    return
+  }
+  wishlist.toggleFavorite(property.value.id)
 }
 
 function closePopup() {
